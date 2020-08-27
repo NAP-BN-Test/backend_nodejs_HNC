@@ -1,7 +1,9 @@
 const Sequelize = require('sequelize');
+const mtblHangHoaGroup2 = require('../tables/tblHangHoaGroup2')
+const mtblHangHoa = require('./tblHangHoa')
 
 module.exports = function (db) {
-    var table = db.define('tblHangHoaGroup2', {
+    var table = db.define('tblHangHoaGroup3', {
         ID: {
             type: Sequelize.BIGINT,
             primaryKey: true,
@@ -9,8 +11,13 @@ module.exports = function (db) {
         },
         TenNhomHang: Sequelize.STRING,
         FlagSelect: Sequelize.BOOLEAN,
-        ID_Group2: Sequelize.BIGINT
+        IDGroup2: Sequelize.BIGINT
     });
-
+    table.belongsTo(mtblHangHoaGroup2(db), {
+        foreignKey: 'IDGroup2'
+    })
+    // table.hasMany(mtblHangHoa(db), {
+    //     foreignKey: 'IDGroup3'
+    // })
     return table;
 }
