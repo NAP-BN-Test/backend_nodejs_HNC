@@ -14,23 +14,24 @@ module.exports = {
 
         database.connectDatabase().then(async db => {
             try {
+                console.log(body);
                 var data = await mSysUser(db).findOne({
                     include: [{
                         model: mtblPrice(db),
                     }],
-                    where: { Username: body.UserName, Password: body.Password },
+                    where: { Username: body.userName, Password: body.passWord },
                 })
                 if (data) {
                     var obj = {
-                        ID: data.ID,
-                        Name: data.Name,
-                        UserName: data.UserName,
-                        Password: data.Password,
-                        Permission: data.Permission,
+                        id: data.ID,
+                        name: data.Name,
+                        userName: data.UserName,
+                        passWord: data.Password,
+                        permission: data.Permission,
                         // list: data.tblPrices
                     }
                     payload = {
-                        "Username": req.body.Username,
+                        "Username": req.body.userName,
                         // standard fields
                         // - Xác thực người tạo
                         "iss": "Tungnn",
@@ -108,7 +109,7 @@ module.exports = {
                     var result;
                     if (Permission.Permission == Constant.USER_ROLE.MANAGER) {
                         var userExist = await mSysUser(db).findOne({
-                            where: { UserName: body.UserName }
+                            where: { UserName: body.userName }
                         });
                         if (userExist) {
                             result = {
@@ -118,12 +119,12 @@ module.exports = {
                             res.json(result);
                         } else {
                             var userCreate = await mSysUser(db).create({
-                                Name: body.Name,
-                                UserName: body.UserName,
-                                Password: body.Password,
+                                Name: body.name,
+                                UserName: body.userName,
+                                Password: body.passWord,
                                 Active: true,
-                                GhiChu: body.GhiChu ? body.GhiChu : '',
-                                Permission: body.Permission ? body.Permission : 1,
+                                GhiChu: body.ghiChu ? body.ghiChu : '',
+                                Permission: body.permission ? body.permission : 1,
                             });
                             if (userCreate)
                                 res.json(Result.ACTION_SUCCESS)
@@ -152,29 +153,29 @@ module.exports = {
         database.connectDatabase().then(async db => {
             let listUpdate = [];
 
-            if (body.Name || body.Name === '')
-                listUpdate.push({ key: 'Name', value: body.Name });
+            if (body.name || body.name === '')
+                listUpdate.push({ key: 'Name', value: body.name });
 
-            if (body.Password || body.Password === '')
-                listUpdate.push({ key: 'Password', value: body.Password });
+            if (body.passWord || body.passWord === '')
+                listUpdate.push({ key: 'Password', value: body.passWord });
 
-            if (body.UserName || body.UserName === '')
-                listUpdate.push({ key: 'UserName', value: body.UserName });
+            if (body.userName || body.userName === '')
+                listUpdate.push({ key: 'UserName', value: body.userName });
 
-            if (body.Active || body.Active === '')
-                listUpdate.push({ key: 'Active', value: body.Active });
+            if (body.active || body.active === '')
+                listUpdate.push({ key: 'Active', value: body.active });
 
-            if (body.GhiChu || body.GhiChu === '')
-                listUpdate.push({ key: 'GhiChu', value: body.GhiChu });
+            if (body.ghiChu || body.ghiChu === '')
+                listUpdate.push({ key: 'GhiChu', value: body.ghiChu });
 
-            if (body.Permission || body.Permission === '')
-                listUpdate.push({ key: 'Permission', value: body.Permission });
+            if (body.permission || body.permission === '')
+                listUpdate.push({ key: 'Permission', value: body.permission });
 
             let update = {};
             for (let field of listUpdate) {
                 update[field.key] = field.value
             }
-            mSysUser(db).update(update, { where: { ID: body.ID } }).then(data => {
+            mSysUser(db).update(update, { where: { ID: body.id } }).then(data => {
                 res.json(Result.ACTION_SUCCESS)
             }).catch(err => {
                 res.json(Result.SYS_ERROR_RESULT);
@@ -218,13 +219,13 @@ module.exports = {
             }).then(data => {
                 data.forEach(elm => {
                     array.push({
-                        ID: elm.ID,
-                        Name: elm.Name,
-                        UserName: elm.UserName,
-                        Password: elm.Password,
-                        Active: elm.Active,
-                        GhiChu: elm.GhiChu ? elm.GhiChu : '',
-                        Permission: elm.Permission ? elm.Permission : 1,
+                        id: elm.ID,
+                        name: elm.Name,
+                        userName: elm.UserName,
+                        passWord: elm.Password,
+                        active: elm.Active,
+                        ghiChu: elm.GhiChu ? elm.GhiChu : '',
+                        permission: elm.Permission ? elm.Permission : 1,
                     })
                 })
             })

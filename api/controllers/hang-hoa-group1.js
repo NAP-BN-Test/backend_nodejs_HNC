@@ -15,14 +15,14 @@ module.exports = {
         database.connectDatabase().then(async db => {
             try {
                 await mtblHangHoaGroup1(db).create({
-                    TenNhomHang: body.TenNhomHang ? body.TenNhomHang : '',
-                    FlagSelect: body.FlagSelect ? body.FlagSelect : '',
+                    TenNhomHang: body.tenNhomHang ? body.tenNhomHang : '',
+                    FlagSelect: body.flagSelect ? body.flagSelect : '',
 
                 }).then(data => {
                     var obj = {
-                        ID: data.ID,
-                        TenNhomHang: data.TenNhomHang ? data.TenNhomHang : '',
-                        FlagSelect: data.FlagSelect ? data.FlagSelect : '',
+                        id: data.ID,
+                        tenNhomHang: data.TenNhomHang ? data.TenNhomHang : '',
+                        flagSelect: data.FlagSelect ? data.FlagSelect : '',
                     }
                     var result = {
                         status: Constant.STATUS.SUCCESS,
@@ -47,16 +47,16 @@ module.exports = {
             try {
                 let listUpdate = [];
 
-                if (body.TenNhomHang || body.TenNhomHang === '')
-                    listUpdate.push({ key: 'TenNhomHang', value: body.TenNhomHang });
-                if (body.FlagSelect)
-                    listUpdate.push({ key: 'FlagSelect', value: body.FlagSelect });
+                if (body.tenNhomHang || body.tenNhomHang === '')
+                    listUpdate.push({ key: 'TenNhomHang', value: body.tenNhomHang });
+                if (body.flagSelect)
+                    listUpdate.push({ key: 'FlagSelect', value: body.flagSelect });
 
                 let update = {};
                 for (let field of listUpdate) {
                     update[field.key] = field.value
                 }
-                mtblHangHoaGroup1(db).update(update, { where: { ID: body.ID } }).then(() => {
+                mtblHangHoaGroup1(db).update(update, { where: { ID: body.id } }).then(() => {
                     res.json(Result.ACTION_SUCCESS)
                 }).catch(() => {
                     res.json(Result.SYS_ERROR_RESULT);
@@ -132,9 +132,9 @@ module.exports = {
             }).then(data => {
                 data.forEach(elm => {
                     array.push({
-                        ID: elm.ID,
-                        TenNhomHang: elm.TenNhomHang ? elm.TenNhomHang : '',
-                        FlagSelect: elm.FlagSelect ? elm.FlagSelect : '',
+                        id: elm.ID,
+                        tenNhomHang: elm.TenNhomHang ? elm.TenNhomHang : '',
+                        flagSelect: elm.FlagSelect ? elm.FlagSelect : '',
                     })
                 })
             })

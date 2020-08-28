@@ -21,14 +21,14 @@ module.exports = function (app) {
     app.route('/hnc/delete_goods_group1').post(checkToken.checkToken, mtblHangHoaGroup1.deleteGoodsGroup1);
     app.route('/hnc/get_list_goods_group1').post(checkToken.checkToken, mtblHangHoaGroup1.getListGoodsGroup1);
 
-    // Hàng hóa group 2
+    // Hàng hóa group 2 chưa test
     var mtblHangHoaGroup2 = require('./controllers/hang-hoa-group2');
     app.route('/hnc/add_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.addGoodsGroup2);
     app.route('/hnc/update_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.updateGoodsGroup2);
     app.route('/hnc/delete_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.deleteGoodsGroup2);
     app.route('/hnc/get_list_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.getListGoodsGroup2);
 
-    // Hàng hóa group 3
+    // Hàng hóa group 3 chưa test
     var mtblHangHoaGroup3 = require('./controllers/hang-hoa-group3');
     app.route('/hnc/add_goods_group3').post(checkToken.checkToken, mtblHangHoaGroup3.addGoodsGroup3);
     app.route('/hnc/update_goods_group3').post(checkToken.checkToken, mtblHangHoaGroup3.updateGoodsGroup3);

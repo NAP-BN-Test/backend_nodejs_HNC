@@ -15,16 +15,16 @@ module.exports = {
         database.connectDatabase().then(async db => {
             try {
                 await mtblHangHoaGroup2(db).create({
-                    TenNhomHang: body.TenNhomHang ? body.TenNhomHang : '',
-                    FlagSelect: body.FlagSelect ? body.FlagSelect : '',
-                    IDGroup1: body.IDGroup1 ? body.IDGroup1 : '',
+                    TenNhomHang: body.tenNhomHang ? body.tenNhomHang : '',
+                    FlagSelect: body.flagSelect ? body.flagSelect : '',
+                    IDGroup1: body.idGroup1 ? body.idGroup1 : '',
 
                 }).then(data => {
                     var obj = {
-                        ID: data.ID,
-                        TenNhomHang: data.TenNhomHang ? data.TenNhomHang : '',
-                        FlagSelect: data.FlagSelect ? data.FlagSelect : '',
-                        IDGroup1: data.IDGroup1 ? data.IDGroup1 : '',
+                        id: data.ID,
+                        tenNhomHang: data.TenNhomHang ? data.TenNhomHang : '',
+                        flagSelect: data.FlagSelect ? data.FlagSelect : '',
+                        idGroup1: data.IDGroup1 ? data.IDGroup1 : '',
 
                     }
                     var result = {
@@ -50,15 +50,15 @@ module.exports = {
             try {
                 let listUpdate = [];
 
-                if (body.TenNhomHang || body.TenNhomHang === '')
-                    listUpdate.push({ key: 'TenNhomHang', value: body.TenNhomHang });
-                if (body.FlagSelect)
-                    listUpdate.push({ key: 'FlagSelect', value: body.FlagSelect });
-                if (body.IDGroup1 || body.IDGroup1 === '') {
-                    if (body.IDGroup1 === '')
+                if (body.tenNhomHang || body.tenNhomHang === '')
+                    listUpdate.push({ key: 'TenNhomHang', value: body.tenNhomHang });
+                if (body.flagSelect)
+                    listUpdate.push({ key: 'FlagSelect', value: body.flagSelect });
+                if (body.idGroup1 || body.idGroup1 === '') {
+                    if (body.idGroup1 === '')
                         listUpdate.push({ key: 'IDGroup1', value: null });
                     else
-                        listUpdate.push({ key: 'IDGroup1', value: body.IDGroup1 });
+                        listUpdate.push({ key: 'IDGroup1', value: body.idGroup1 });
                 }
 
                 let update = {};
@@ -146,11 +146,11 @@ module.exports = {
             }).then(data => {
                 data.forEach(elm => {
                     array.push({
-                        ID: elm.ID,
-                        TenNhomHang: elm.TenNhomHang ? elm.TenNhomHang : '',
-                        FlagSelect: elm.FlagSelect ? elm.FlagSelect : '',
-                        IDGroup1: elm.IDGroup1 ? elm.IDGroup1 : '',
-                        NameGroup1: elm.tblHangHoaGroup1 ? elm.tblHangHoaGroup1 : ''
+                        id: elm.ID,
+                        tenNhomHang: elm.TenNhomHang ? elm.TenNhomHang : '',
+                        flagSelect: elm.FlagSelect ? elm.FlagSelect : '',
+                        idGroup1: elm.IDGroup1 ? elm.IDGroup1 : '',
+                        nameGroup1: elm.tblHangHoaGroup1 ? elm.tblHangHoaGroup1 : ''
                     })
                 })
             })

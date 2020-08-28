@@ -59,39 +59,39 @@ module.exports = {
             try {
                 let listUpdate = [];
 
-                if (body.Code || body.Code === '')
-                    listUpdate.push({ key: 'Code', value: body.Code });
-                if (body.NameHangHoa || body.NameHangHoa === '')
-                    listUpdate.push({ key: 'NameHangHoa', value: body.NameHangHoa });
-                if (body.DonViTinh || body.DonViTinh === '')
-                    listUpdate.push({ key: 'DonViTinh', value: body.DonViTinh });
-                if (body.IntenalCode || body.IntenalCode === '')
-                    listUpdate.push({ key: 'IntenalCode', value: body.IntenalCode });
-                if (body.FlagSelect || body.FlagSelect === '')
-                    listUpdate.push({ key: 'FlagSelect', value: body.FlagSelect });
-                if (body.IDGroup1 || body.IDGroup1 === '') {
-                    if (body.IDGroup1 === '')
+                if (body.code || body.code === '')
+                    listUpdate.push({ key: 'Code', value: body.code });
+                if (body.nameHangHoa || body.nameHangHoa === '')
+                    listUpdate.push({ key: 'NameHangHoa', value: body.nameHangHoa });
+                if (body.donViTinh || body.donViTinh === '')
+                    listUpdate.push({ key: 'DonViTinh', value: body.donViTinh });
+                if (body.intenalCode || body.intenalCode === '')
+                    listUpdate.push({ key: 'IntenalCode', value: body.intenalCode });
+                if (body.flagSelect || body.flagSelect === '')
+                    listUpdate.push({ key: 'FlagSelect', value: body.flagSelect });
+                if (body.idGroup1 || body.idGroup1 === '') {
+                    if (body.idGroup1 === '')
                         listUpdate.push({ key: 'IDGroup1', value: null });
                     else
-                        listUpdate.push({ key: 'IDGroup1', value: body.IDGroup1 });
+                        listUpdate.push({ key: 'IDGroup1', value: body.idGroup1 });
 
                 }
-                if (body.IDGroup2 || body.IDGroup2 === '')
-                    if (body.IDGroup2 === '')
+                if (body.idGroup2 || body.idGroup2 === '')
+                    if (body.idGroup2 === '')
                         listUpdate.push({ key: 'IDGroup2', value: null });
                     else
-                        listUpdate.push({ key: 'IDGroup2', value: body.IDGroup2 });
-                if (body.IDGroup3 || body.IDGroup3 === '')
-                    if (body.IDGroup3 === '')
+                        listUpdate.push({ key: 'IDGroup2', value: body.idGroup2 });
+                if (body.idGroup3 || body.idGroup3 === '')
+                    if (body.idGroup3 === '')
                         listUpdate.push({ key: 'IDGroup3', value: null });
                     else
-                        listUpdate.push({ key: 'IDGroup3', value: body.IDGroup3 });
+                        listUpdate.push({ key: 'IDGroup3', value: body.idGroup3 });
 
                 let update = {};
                 for (let field of listUpdate) {
                     update[field.key] = field.value
                 }
-                mHangHoa(db).update(update, { where: { ID: body.ID } }).then(() => {
+                mHangHoa(db).update(update, { where: { ID: body.id } }).then(() => {
                     res.json(Result.ACTION_SUCCESS)
                 }).catch(() => {
                     res.json(Result.SYS_ERROR_RESULT);
@@ -180,18 +180,18 @@ module.exports = {
             }).then(data => {
                 data.forEach(elm => {
                     array.push({
-                        ID: elm.ID,
-                        Code: elm.Code ? elm.Code : '',
-                        NameHangHoa: elm.NameHangHoa ? elm.NameHangHoa : '',
-                        DonViTinh: elm.DonViTinh ? elm.DonViTinh : '',
-                        IntenalCode: elm.IntenalCode ? elm.IntenalCode : '',
-                        FlagSelect: elm.FlagSelect ? elm.FlagSelect : '',
-                        IDGroup1: elm.tblHangHoaGroup1 ? elm.IDGroup1 : '',
-                        NameGroup1: elm.tblHangHoaGroup1 ? elm.tblHangHoaGroup1.TenNhomHang : '',
-                        IDGroup2: elm.tblHangHoaGroup2 ? elm.IDGroup2 : '',
-                        NameGroup2: elm.tblHangHoaGroup2 ? elm.tblHangHoaGroup2.TenNhomHang : '',
-                        IDGroup3: elm.tblHangHoaGroup3 ? elm.IDGroup3 : '',
-                        NameGroup3: elm.tblHangHoaGroup3 ? elm.tblHangHoaGroup3.TenNhomHang : '',
+                        id: elm.ID,
+                        code: elm.Code ? elm.Code : '',
+                        nameHangHoa: elm.NameHangHoa ? elm.NameHangHoa : '',
+                        donViTinh: elm.DonViTinh ? elm.DonViTinh : '',
+                        intenalCode: elm.IntenalCode ? elm.IntenalCode : '',
+                        flagSelect: elm.FlagSelect ? elm.FlagSelect : '',
+                        idGroup1: elm.tblHangHoaGroup1 ? elm.IDGroup1 : '',
+                        nameGroup1: elm.tblHangHoaGroup1 ? elm.tblHangHoaGroup1.TenNhomHang : '',
+                        idGroup2: elm.tblHangHoaGroup2 ? elm.IDGroup2 : '',
+                        nameGroup2: elm.tblHangHoaGroup2 ? elm.tblHangHoaGroup2.TenNhomHang : '',
+                        idGroup3: elm.tblHangHoaGroup3 ? elm.IDGroup3 : '',
+                        nameGroup3: elm.tblHangHoaGroup3 ? elm.tblHangHoaGroup3.TenNhomHang : '',
                     })
                 })
             })
