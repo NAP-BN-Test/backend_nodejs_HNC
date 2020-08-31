@@ -7,8 +7,45 @@ var mHangHoa = require('../tables/tblHangHoa');
 const mtblHangHoaGroup1 = require('../tables/tblHangHoaGroup1')
 const mtblHangHoaGroup2 = require('../tables/tblHangHoaGroup2')
 const mtblHangHoaGroup3 = require('../tables/tblHangHoaGroup3')
+let apiHangHoa = require('./hang-hoa');
+let apiHangHoaGroup3 = require('./hang-hoa-group3');
+
+async function getListHangHoa(db, listID) {
+    var listIDHangHoa = await mHangHoa(db).findAll({
+        where: { IDGroup2: { [Op.in]: listID } },
+    })
+    var list = [];
+    listIDHangHoa.forEach(item => {
+        list.push(Number(item.ID))
+    })
+    return list;
+}
+
+async function getListHangHoaGroup3(db, listID) {
+    var listIDHangHoaGroup3 = await mtblHangHoaGroup3(db).findAll({
+        where: { IDGroup2: { [Op.in]: listID } },
+    })
+    var list = [];
+    listIDHangHoaGroup3.forEach(item => {
+        list.push(Number(item.ID))
+    })
+    return list;
+}
+
+async function deleteHangHoaGroup2(db, listID) {
+    let list = await getListHangHoa(db, listID);
+    let listGroup3 = await getListHangHoaGroup3(db, listID);
+    await apiHangHoa.deleteHangHoa(db, list);
+    await apiHangHoaGroup3.deletetblHangHoaGroup3(db, listGroup3);
+    await mtblHangHoaGroup2(db).destroy({
+        where: {
+            ID: { [Op.in]: listID },
+        }
+    });
+}
 
 module.exports = {
+    deleteHangHoaGroup2,
     // add_goods_group2
     addGoodsGroup2: (req, res) => {
         let body = req.body;
@@ -65,7 +102,7 @@ module.exports = {
                 for (let field of listUpdate) {
                     update[field.key] = field.value
                 }
-                mtblHangHoaGroup2(db).update(update, { where: { ID: body.ID } }).then(() => {
+                mtblHangHoaGroup2(db).update(update, { where: { ID: body.id } }).then(() => {
                     res.json(Result.ACTION_SUCCESS)
                 }).catch(() => {
                     res.json(Result.SYS_ERROR_RESULT);
@@ -85,16 +122,12 @@ module.exports = {
         database.connectDatabase().then(async db => {
 
             try {
-                let listIDJson = body.listID;
+                let listIDJson = JSON.parse(body.listID);
                 let listID = [];
                 listIDJson.forEach(item => {
                     listID.push(Number(item + ""));
                 });
-                await mtblHangHoaGroup2(db).destroy({
-                    where: {
-                        ID: { [Op.in]: listID },
-                    }
-                });
+                deleteHangHoaGroup2(db, listID);
 
                 res.json(Result.ACTION_SUCCESS);
 
@@ -112,18 +145,30 @@ module.exports = {
             let where = {};
             let whereSearch = [];
             if (body.searchKey) {
-                whereSearch = [
-                    { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
-                ];
+                if (body.idGroup1)
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
+                        { IDGroup1: body.idGroup1 },
+                    ];
+                else
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
+                    ];
             } else {
-                whereSearch = [
-                    { TenNhomHang: { [Op.like]: '%' + '' + '%' } },
-                ];
+                if (body.idGroup1)
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + '' + '%' } },
+                        { IDGroup1: body.idGroup1 },
+                    ];
+                else
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + '' + '%' } },
+                    ];
             }
             where = {
-                [Op.or]: whereSearch,
+                [Op.and]: whereSearch,
             }
-
+            console.log(where);
             var count = await mtblHangHoaGroup2(db).count({ where: where });
             var array = [];
             var itemPerPage = 10000;
@@ -159,7 +204,7 @@ module.exports = {
                 status: Constant.STATUS.SUCCESS,
                 message: '',
                 array: array,
-                count: count,
+                all: count,
             }
             res.json(result)
         })

@@ -7,6 +7,42 @@ var mHangHoa = require('../tables/tblHangHoa');
 const mtblHangHoaGroup1 = require('../tables/tblHangHoaGroup1')
 const mtblHangHoaGroup2 = require('../tables/tblHangHoaGroup2')
 const mtblHangHoaGroup3 = require('../tables/tblHangHoaGroup3')
+let apiHangHoa = require('./hang-hoa');
+let apiHangHoaGroup2 = require('./hang-hoa-group2');
+
+async function getListHangHoa(db, listID) {
+    var listIDHangHoa = await mHangHoa(db).findAll({
+        where: { IDGroup1: { [Op.in]: listID } },
+    })
+    var list = [];
+    listIDHangHoa.forEach(item => {
+        list.push(Number(item.ID))
+    })
+    return list;
+}
+
+async function getListHangHoaGroup2(db, listID) {
+    var listIDHangHoaGroup2 = await mtblHangHoaGroup2(db).findAll({
+        where: { IDGroup1: { [Op.in]: listID } },
+    })
+    var list = [];
+    listIDHangHoaGroup2.forEach(item => {
+        list.push(Number(item.ID))
+    })
+    return list;
+}
+
+async function deleteHangHoaGroup1(db, listID) {
+    let list = await getListHangHoa(db, listID);
+    let listGroup2 = await getListHangHoaGroup2(db, listID);
+    await apiHangHoa.deleteHangHoa(db, list);
+    await apiHangHoaGroup2.deleteHangHoaGroup2(db, listGroup2);
+    await mtblHangHoaGroup1(db).destroy({
+        where: {
+            ID: { [Op.in]: listID },
+        }
+    });
+}
 
 module.exports = {
     // add_goods_group1
@@ -81,11 +117,7 @@ module.exports = {
                 listIDJson.forEach(item => {
                     listID.push(Number(item + ""));
                 });
-                await mtblHangHoaGroup1(db).destroy({
-                    where: {
-                        ID: { [Op.in]: listID },
-                    }
-                });
+                deleteHangHoaGroup1(db, listID);
 
                 res.json(Result.ACTION_SUCCESS);
 
@@ -143,7 +175,7 @@ module.exports = {
                 status: Constant.STATUS.SUCCESS,
                 message: '',
                 array: array,
-                count: count,
+                all: count,
             }
             res.json(result)
         })

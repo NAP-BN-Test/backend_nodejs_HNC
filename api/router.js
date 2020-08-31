@@ -21,18 +21,31 @@ module.exports = function (app) {
     app.route('/hnc/delete_goods_group1').post(checkToken.checkToken, mtblHangHoaGroup1.deleteGoodsGroup1);
     app.route('/hnc/get_list_goods_group1').post(checkToken.checkToken, mtblHangHoaGroup1.getListGoodsGroup1);
 
-    // Hàng hóa group 2 chưa test
+    // Hàng hóa group 2
     var mtblHangHoaGroup2 = require('./controllers/hang-hoa-group2');
     app.route('/hnc/add_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.addGoodsGroup2);
     app.route('/hnc/update_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.updateGoodsGroup2);
     app.route('/hnc/delete_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.deleteGoodsGroup2);
     app.route('/hnc/get_list_goods_group2').post(checkToken.checkToken, mtblHangHoaGroup2.getListGoodsGroup2);
 
-    // Hàng hóa group 3 chưa test
+    // Hàng hóa group 3
     var mtblHangHoaGroup3 = require('./controllers/hang-hoa-group3');
     app.route('/hnc/add_goods_group3').post(checkToken.checkToken, mtblHangHoaGroup3.addGoodsGroup3);
     app.route('/hnc/update_goods_group3').post(checkToken.checkToken, mtblHangHoaGroup3.updateGoodsGroup3);
     app.route('/hnc/delete_goods_group3').post(checkToken.checkToken, mtblHangHoaGroup3.deleteGoodsGroup3);
     app.route('/hnc/get_list_goods_group3').post(checkToken.checkToken, mtblHangHoaGroup3.getListGoodsGroup3);
 
+    // price
+    var mtblprice = require('./controllers/price');
+    app.route('/hnc/add_price').post(checkToken.checkToken, mtblprice.addPrice);
+    app.route('/hnc/update_price').post(checkToken.checkToken, mtblprice.updatePrice);
+    app.route('/hnc/delete_price').post(checkToken.checkToken, mtblprice.deletePrice);
+    app.route('/hnc/get_list_price').post(checkToken.checkToken, mtblprice.getListPrice);
+
+    // link get price chưa test
+    var mtbllinkgetprice = require('./controllers/link-get-price');
+    app.route('/hnc/add_link_get_price').post(checkToken.checkToken, mtbllinkgetprice.addLinkGetPrice);
+    app.route('/hnc/update_link_get_price').post(checkToken.checkToken, mtbllinkgetprice.updateLinkGetPrice);
+    app.route('/hnc/delete_link_get_price').post(checkToken.checkToken, mtbllinkgetprice.deleteLinkGetPrice);
+    app.route('/hnc/get_list_link_get_price').post(checkToken.checkToken, mtbllinkgetprice.getListLinkGetPrice);
 }

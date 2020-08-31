@@ -12,7 +12,7 @@ module.exports = function (db) {
         Password: Sequelize.STRING,
         Active: Sequelize.BOOLEAN,
         GhiChu: Sequelize.STRING,
-        Permission: Sequelize.INTEGER,
+        Permission: Sequelize.STRING,
         Name: Sequelize.STRING,
     });
     table.hasMany(mtblPrice(db), {

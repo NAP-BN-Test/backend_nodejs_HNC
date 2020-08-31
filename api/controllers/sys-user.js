@@ -7,26 +7,46 @@ let jwt = require('jsonwebtoken');
 
 var mtblPrice = require('../tables/tblPrice')
 
+function checkActive(active) {
+    if (active === true)
+        return 'Có hiệu lực'
+    else
+        return 'Vô hiệu hóa'
+}
+
+async function deleteSysUser(db, listID) {
+    await mtblPrice(db).update({
+        IDUserGet: null,
+    }, {
+        where: {
+            IDUserGet: { [Op.in]: listID }
+        }
+    })
+    await mSysUser(db).destroy({
+        where: {
+            ID: { [Op.in]: listID },
+        }
+    });
+}
 
 module.exports = {
+    deleteSysUser,
     login: (req, res) => {
         let body = req.body;
-
         database.connectDatabase().then(async db => {
             try {
-                console.log(body);
                 var data = await mSysUser(db).findOne({
                     include: [{
                         model: mtblPrice(db),
                     }],
-                    where: { Username: body.userName, Password: body.passWord },
+                    where: { UserName: body.userName, Password: body.password },
                 })
                 if (data) {
                     var obj = {
                         id: data.ID,
                         name: data.Name,
                         userName: data.UserName,
-                        passWord: data.Password,
+                        password: data.Password,
                         permission: data.Permission,
                         // list: data.tblPrices
                     }
@@ -55,6 +75,7 @@ module.exports = {
 
                 }
             } catch (error) {
+                console.log(error);
                 res.json(Result.SYS_ERROR_RESULT)
             }
         }, error => {
@@ -74,25 +95,18 @@ module.exports = {
         let body = req.body;
 
         database.connectDatabase().then(async db => {
-
             try {
                 let listIDJson = JSON.parse(body.listID);
                 let listID = [];
                 listIDJson.forEach(item => {
                     listID.push(Number(item + ""));
                 });
-                mSysUser(db).destroy({
-                    where: {
-                        ID: { [Op.in]: listID },
-                    }
-                });
-
+                deleteSysUser(db, listID)
                 res.json(Result.ACTION_SUCCESS);
 
             } catch (error) {
                 console.log(error);
-                res.json(Result.SYS_ERROR_RESULT)
-
+                res.json(Result.SYS_ERROR_RESULT);
             }
         })
     },
@@ -100,7 +114,6 @@ module.exports = {
         let body = req.body;
 
         database.connectDatabase().then(async db => {
-
             try {
                 var Permission = await mSysUser(db).findOne({
                     where: { ID: body.userID }
@@ -121,7 +134,7 @@ module.exports = {
                             var userCreate = await mSysUser(db).create({
                                 Name: body.name,
                                 UserName: body.userName,
-                                Password: body.passWord,
+                                Password: body.password,
                                 Active: true,
                                 GhiChu: body.ghiChu ? body.ghiChu : '',
                                 Permission: body.permission ? body.permission : 1,
@@ -149,22 +162,22 @@ module.exports = {
     },
     updateUser: (req, res) => {
         let body = req.body;
-
         database.connectDatabase().then(async db => {
             let listUpdate = [];
 
             if (body.name || body.name === '')
                 listUpdate.push({ key: 'Name', value: body.name });
 
-            if (body.passWord || body.passWord === '')
-                listUpdate.push({ key: 'Password', value: body.passWord });
+            if (body.password || body.password === '')
+                listUpdate.push({ key: 'Password', value: body.password });
 
             if (body.userName || body.userName === '')
                 listUpdate.push({ key: 'UserName', value: body.userName });
 
-            if (body.active || body.active === '')
+            if (body.active) {
+                console.log(body.active);
                 listUpdate.push({ key: 'Active', value: body.active });
-
+            }
             if (body.ghiChu || body.ghiChu === '')
                 listUpdate.push({ key: 'GhiChu', value: body.ghiChu });
 
@@ -202,7 +215,6 @@ module.exports = {
                 [Op.or]: whereSearch,
             }
             var count = await mSysUser(db).count({ where: where });
-            console.log(where);
             var array = [];
             var itemPerPage = 10000;
             var page = 1;
@@ -222,8 +234,8 @@ module.exports = {
                         id: elm.ID,
                         name: elm.Name,
                         userName: elm.UserName,
-                        passWord: elm.Password,
-                        active: elm.Active,
+                        password: elm.Password,
+                        active: checkActive(elm.Active),
                         ghiChu: elm.GhiChu ? elm.GhiChu : '',
                         permission: elm.Permission ? elm.Permission : 1,
                     })
@@ -234,7 +246,7 @@ module.exports = {
                 status: Constant.STATUS.SUCCESS,
                 message: '',
                 array: array,
-                count: count,
+                all: count,
             }
             res.json(result)
         })

@@ -13,9 +13,8 @@ module.exports = {
     },
 
     USER_ROLE: {
-        GUEST: 0,
-        STAFF: 1,
-        MANAGER: 2
+        STAFF: 'Nhân viên',
+        MANAGER: 'Quản lý'
     },
 
     STATUS: {

@@ -6,10 +6,33 @@ var mSysUser = require('../tables/tblSysUser');
 var mHangHoa = require('../tables/tblHangHoa');
 const mtblHangHoaGroup1 = require('../tables/tblHangHoaGroup1')
 const mtblHangHoaGroup2 = require('../tables/tblHangHoaGroup2')
-const mtblHangHoaGroup3 = require('../tables/tblHangHoaGroup3')
+const mtblHangHoaGroup3 = require('../tables/tblHangHoaGroup3');
+let apiHangHoa = require('./hang-hoa');
+
+async function getListHangHoa(db, listID) {
+    var listIDHangHoa = await mHangHoa(db).findAll({
+        where: { IDGroup3: { [Op.in]: listID } },
+    })
+    var list = [];
+    listIDHangHoa.forEach(item => {
+        list.push(Number(item.ID))
+    })
+    return list;
+}
+
+async function deletetblHangHoaGroup3(db, listID) {
+    let list = await getListHangHoa(db, listID);
+    await apiHangHoa.deleteHangHoa(db, list);
+    await mtblHangHoaGroup3(db).destroy({
+        where: {
+            ID: { [Op.in]: listID },
+        }
+    });
+}
 
 module.exports = {
     // add_goods_group3
+    deletetblHangHoaGroup3,
     addGoodsGroup3: (req, res) => {
         let body = req.body;
         database.connectDatabase().then(async db => {
@@ -65,7 +88,7 @@ module.exports = {
                 for (let field of listUpdate) {
                     update[field.key] = field.value
                 }
-                mtblHangHoaGroup3(db).update(update, { where: { ID: body.ID } }).then(() => {
+                mtblHangHoaGroup3(db).update(update, { where: { ID: body.id } }).then(() => {
                     res.json(Result.ACTION_SUCCESS)
                 }).catch(() => {
                     res.json(Result.SYS_ERROR_RESULT);
@@ -85,16 +108,12 @@ module.exports = {
         database.connectDatabase().then(async db => {
 
             try {
-                let listIDJson = body.listID;
+                let listIDJson = JSON.parse(body.listID);
                 let listID = [];
                 listIDJson.forEach(item => {
                     listID.push(Number(item + ""));
                 });
-                await mtblHangHoaGroup3(db).destroy({
-                    where: {
-                        ID: { [Op.in]: listID },
-                    }
-                });
+                deletetblHangHoaGroup3(db, listID);
 
                 res.json(Result.ACTION_SUCCESS);
 
@@ -112,16 +131,28 @@ module.exports = {
             let where = {};
             let whereSearch = [];
             if (body.searchKey) {
-                whereSearch = [
-                    { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
-                ];
+                if (body.idGroup2)
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
+                        { IDGroup2: body.idGroup2 },
+                    ];
+                else
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
+                    ];
             } else {
-                whereSearch = [
-                    { TenNhomHang: { [Op.like]: '%' + '' + '%' } },
-                ];
+                if (body.idGroup2)
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + '' + '%' } },
+                        { IDGroup2: body.idGroup2 },
+                    ];
+                else
+                    whereSearch = [
+                        { TenNhomHang: { [Op.like]: '%' + '' + '%' } },
+                    ];
             }
             where = {
-                [Op.or]: whereSearch,
+                [Op.and]: whereSearch,
             }
 
             var count = await mtblHangHoaGroup3(db).count({ where: where });
@@ -137,7 +168,7 @@ module.exports = {
                 where: where,
                 include: [
                     {
-                        model: mtblHangHoaGroup1(db)
+                        model: mtblHangHoaGroup2(db)
                     },
                 ],
                 order: [['ID', 'DESC']],
@@ -150,7 +181,7 @@ module.exports = {
                         tenNhomHang: elm.TenNhomHang ? elm.TenNhomHang : '',
                         flagSelect: elm.FlagSelect ? elm.FlagSelect : '',
                         idGroup2: elm.IDGroup2 ? elm.IDGroup2 : '',
-                        nameGroup1: elm.tblHangHoaGroup1 ? elm.tblHangHoaGroup1 : ''
+                        nameGroup1: elm.tblHangHoaGroup2 ? elm.tblHangHoaGroup2 : ''
                     })
                 })
             })
@@ -159,7 +190,7 @@ module.exports = {
                 status: Constant.STATUS.SUCCESS,
                 message: '',
                 array: array,
-                count: count,
+                all: count,
             }
             res.json(result)
         })

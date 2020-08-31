@@ -7,12 +7,38 @@ var mHangHoa = require('../tables/tblHangHoa');
 const mtblHangHoaGroup1 = require('../tables/tblHangHoaGroup1')
 const mtblHangHoaGroup2 = require('../tables/tblHangHoaGroup2')
 const mtblHangHoaGroup3 = require('../tables/tblHangHoaGroup3')
+var mtblLinkGetPrice = require('../tables/tblLinkGetPrice');
+const apiLinkGetPrice = require('./link-get-price');
+const mtblPrice = require('../tables/tblPrice')
 
+
+async function getListIDLinkGetPrice(db, listID) {
+    var listIDLinkPrice = await mtblLinkGetPrice(db).findAll({
+        where: { IDHangHoa: { [Op.in]: listID } },
+    })
+    var list = [];
+    listIDLinkPrice.forEach(item => {
+        list.push(Number(item.ID))
+    })
+    return list;
+}
+
+async function deleteHangHoa(db, listID) {
+    var list = await getListIDLinkGetPrice(db, listID);
+    await apiLinkGetPrice.deletetblLinkGetPrice(db, list);
+    mHangHoa(db).destroy({
+        where: {
+            ID: { [Op.in]: listID },
+        }
+    });
+}
 
 module.exports = {
+    deleteHangHoa,
     // add_goods : thêm hàng hóa
     addGoods: (req, res) => {
         let body = req.body;
+        console.log(body);
         database.connectDatabase().then(async db => {
             try {
                 await mHangHoa(db).create({
@@ -107,7 +133,6 @@ module.exports = {
     // delete_goods : xóa hàng hóa
     deleteGoods: (req, res) => {
         let body = req.body;
-
         database.connectDatabase().then(async db => {
 
             try {
@@ -116,11 +141,7 @@ module.exports = {
                 listIDJson.forEach(item => {
                     listID.push(Number(item + ""));
                 });
-                mHangHoa(db).destroy({
-                    where: {
-                        ID: { [Op.in]: listID },
-                    }
-                });
+                deleteHangHoa(db, listID);
 
                 res.json(Result.ACTION_SUCCESS);
 
@@ -152,7 +173,6 @@ module.exports = {
             }
 
             var count = await mHangHoa(db).count({ where: where });
-            console.log(where);
             var array = [];
             var itemPerPage = 10000;
             var page = 1;
@@ -195,12 +215,11 @@ module.exports = {
                     })
                 })
             })
-
             var result = {
                 status: Constant.STATUS.SUCCESS,
                 message: '',
                 array: array,
-                count: count,
+                all: count,
             }
             res.json(result)
         })

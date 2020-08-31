@@ -1,9 +1,9 @@
 const Sequelize = require('sequelize');
-const mtblHangHoa = require('../tables/tblHangHoa')
-// const mtblPrice = require('../tables/tblPrice')
+// const mtblHangHoa = require('../tables/tblHangHoa')
+const mtblPrice = require('../tables/tblPrice')
 
 module.exports = function (db) {
-    var table = db.define('tblLinkGetPrice', {
+    var tblLinkGetPrice = db.define('tblLinkGetPrice', {
         ID: {
             type: Sequelize.BIGINT,
             primaryKey: true,
@@ -15,13 +15,16 @@ module.exports = function (db) {
         EnumLoaiLink: Sequelize.INTEGER
     });
 
-    table.belongsTo(mtblHangHoa(db), {
-        foreignKey: 'IDHangHoa'
-    })
-
-    // table.hasMany(mtblPrice(db), {
-    //     foreignKey: 'IDLink'
+    // tblLinkGetPrice.belongsTo(mtblHangHoa(db), {
+    //     foreignKey: 'IDHangHoa'
     // })
+    // relationship
+    // tblLinkGetPrice.associate = function (models) {
+    tblLinkGetPrice.hasMany(mtblPrice(db), {
+        foreignKey: 'IDLink'
+    })
+    // };
 
-    return table;
+
+    return tblLinkGetPrice;
 }
