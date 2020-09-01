@@ -10,6 +10,7 @@ module.exports = {
         NO_PERMISSION: "Bạn không có quyền thực hiện thao tác này!",
         INVALID_USER: "Tên đăng nhập đã tồn tại!",
         BINDING_ERROR: "Lỗi ràng buộc",
+        DATA_FAIL: "Lỗi dữ liệu",
     },
 
     USER_ROLE: {
@@ -61,5 +62,13 @@ module.exports = {
         DAY: 2,   //Thứ trong tuần
         DATE: 3,   //Ngày trong tháng
         MONTH: 4   //Tháng trong năm
-    }
+    },
+
+    COMPETITOR: {
+        PhongVu: 0,
+        AnPhat: 1,
+        PhucAnh: 2,
+        Gearvn: 3,
+        HNC: 4,
+    },
 }

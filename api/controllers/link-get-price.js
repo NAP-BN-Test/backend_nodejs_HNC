@@ -134,38 +134,56 @@ module.exports = {
     getListLinkGetPrice: (req, res) => {
         let body = req.body;
         database.connectDatabase().then(async db => {
-            var count = await mtblLinkGetPrice(db).count();
+
             var array = [];
             var itemPerPage = 10000;
             var page = 1;
+            let where = {};
+            let whereSearch = [];
+            if (body.idHangHoa) {
+                whereSearch = [
+                    { IDHangHoa: body.idHangHoa },
+                ];
+            }
+            else {
+                whereSearch = [
+                    { ID: { [Op.not]: 0 } },
+                ];
+            }
+            where = {
+                [Op.or]: whereSearch,
+            }
             if (body.itemPerPage) {
                 itemPerPage = Number(body.itemPerPage);
                 if (body.page)
                     page = Number(body.page);
             }
+            var count = await mtblLinkGetPrice(db).count({ where: where });
             await mtblLinkGetPrice(db).findAll({
+                where: where,
                 include: [
                     {
                         model: mtblPrice(db),
                         required: false
-                    },
-                    {
-                        model: mHangHoa(db)
                     },
                 ],
                 order: [['ID', 'DESC']],
                 offset: itemPerPage * (page - 1),
                 limit: itemPerPage
             }).then(data => {
+
                 data.forEach(elm => {
                     var Prices;
                     if (elm.tblPrices[0])
                         Prices = elm.tblPrices[0].dataValues.Price;
+                    var nameHangHoa = mHangHoa(db).findOne({
+                        ID: elm.IDHangHoa
+                    })
                     array.push({
                         id: elm.ID,
                         linkAddress: elm.LinkAddress ? elm.LinkAddress : '',
                         idHangHoa: elm.IDHangHoa ? elm.IDHangHoa : '',
-                        nameHangHoa: elm.tblHangHoa ? elm.tblHangHoa.Code : '',
+                        nameHangHoa: nameHangHoa ? nameHangHoa.Code : '',
                         description: elm.Description ? elm.Description : '',
                         enumLoaiLink: elm.EnumLoaiLink ? elm.EnumLoaiLink : '',
                         price: Prices ? Prices : '',

@@ -13,6 +13,7 @@ module.exports = function (app) {
     app.route('/hnc/update_goods').post(checkToken.checkToken, mtblHangHoa.updateGoods);
     app.route('/hnc/delete_goods').post(checkToken.checkToken, mtblHangHoa.deleteGoods);
     app.route('/hnc/get_list_goods').post(checkToken.checkToken, mtblHangHoa.getListGoods);
+    app.route('/hnc/get_detail_goods').post(checkToken.checkToken, mtblHangHoa.getDetailGoods);
 
     // Hàng hóa group 1
     var mtblHangHoaGroup1 = require('./controllers/hang-hoa-group1');

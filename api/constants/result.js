@@ -5,6 +5,10 @@ module.exports = {
         status: Constant.STATUS.FAIL,
         message: Constant.MESSAGE.SYS_ERROR
     },
+    ERROR_DATA: {
+        status: Constant.STATUS.FAIL,
+        message: Constant.MESSAGE.DATA_FAIL
+    },
 
     NO_DATA_RESULT: {
         status: Constant.STATUS.FAIL,
