@@ -40,7 +40,7 @@ async function checkIn(array, value) {
 }
 
 async function checkGroup(db, idGroup1, idGroup2, idGroup3) {
-    console.log('1:' + idGroup1 + idGroup2 + idGroup3);
+    if (!idGroup1 && !idGroup1 && !idGroup1) return true
     if (!idGroup1) return false
     else if (idGroup2) {
         let check1 = await mtblHangHoaGroup2(db).findAll({ where: { IDGroup1: idGroup1 } })
@@ -77,7 +77,6 @@ module.exports = {
     addGoods: (req, res) => {
         let body = req.body;
         var link = JSON.parse(body.items);
-        console.log(link);
         database.connectDatabase().then(async db => {
             try {
                 let checkGroupExits = await checkGroup(db, body.idGroup1, body.idGroup2, body.idGroup3);
@@ -91,10 +90,10 @@ module.exports = {
                         IDGroup1: body.idGroup1 ? body.idGroup1 : null,
                         IDGroup2: body.idGroup2 ? body.idGroup2 : null,
                         IDGroup3: body.idGroup3 ? body.idGroup3 : null,
-                        PATH: body.path ? body.path : null,
+                        PART: body.part ? body.part : null,
                     }).then(async data => {
                         for (var i = 0; i < link.length; i++) {
-                            if (link[i].name.number !== '')
+                            if (link[i].name !== '')
                                 await mtblLinkGetPrice(db).create({
                                     IDHangHoa: data.ID,
                                     LinkAddress: link[i].link,
@@ -157,8 +156,8 @@ module.exports = {
                     listUpdate.push({ key: 'IntenalCode', value: body.intenalCode });
                 if (body.flagSelect || body.flagSelect === '')
                     listUpdate.push({ key: 'FlagSelect', value: body.flagSelect });
-                if (body.path || body.path === '')
-                    listUpdate.push({ key: 'PATH', value: body.path });
+                if (body.part || body.part === '')
+                    listUpdate.push({ key: 'PART', value: body.part });
                 if (body.idGroup1 || body.idGroup1 === '') {
                     if (body.idGroup1 === '')
                         listUpdate.push({ key: 'IDGroup1', value: null });
@@ -183,15 +182,17 @@ module.exports = {
                 await mtblLinkGetPrice(db).destroy({
                     where: { IDHangHoa: body.id }
                 })
-                var listObjLink = JSON.parse(listObjLink);
-                console.log(listObjLink);
-                for (var i = 0; i < listObjLink.length; i++) {
-                    await mtblLinkGetPrice(db).create({
-                        IDHangHoa: listObjLink[i].idHangHoa ? listObjLink[i].idHangHoa : null,
-                        LinkAddress: listObjLink[i].linkAddress ? listObjLink[i].linkAddress : '',
-                        Description: listObjLink[i].description ? listObjLink[i].description : '',
-                        EnumLoaiLink: listObjLink[i].enumLoaiLink ? listObjLink[i].enumLoaiLink : '',
-                    })
+                console.log(body.items);
+                if (body.items) {
+                    var listObjLink = JSON.parse(body.items);
+                    for (var i = 0; i < listObjLink.length; i++) {
+                        await mtblLinkGetPrice(db).create({
+                            IDHangHoa: body.id ? body.id : null,
+                            LinkAddress: listObjLink[i].link ? listObjLink[i].link : '',
+                            Description: '',
+                            EnumLoaiLink: listObjLink[i].name.number ? listObjLink[i].name.number : '',
+                        })
+                    }
                 }
                 mHangHoa(db).update(update, { where: { ID: body.id } }).then(() => {
                     res.json(Result.ACTION_SUCCESS)
@@ -304,7 +305,7 @@ module.exports = {
                         nameGroup2: elm.tblHangHoaGroup2 ? elm.tblHangHoaGroup2.TenNhomHang : '',
                         idGroup3: elm.tblHangHoaGroup3 ? elm.IDGroup3 : '',
                         nameGroup3: elm.tblHangHoaGroup3 ? elm.tblHangHoaGroup3.TenNhomHang : '',
-                        path: elm.PATH,
+                        part: elm.PART,
                         listLink: listLink,
 
                     })
@@ -322,6 +323,7 @@ module.exports = {
     // get_detail_goods 
     getDetailGoods: (req, res) => {
         let body = req.body;
+        console.log(body);
         database.connectDatabase().then(async db => {
             await mHangHoa(db).findOne({
                 where: { ID: body.id },
@@ -356,8 +358,8 @@ module.exports = {
                         nameGroup2: data.tblHangHoaGroup2 ? data.tblHangHoaGroup2.TenNhomHang : '',
                         idGroup3: data.tblHangHoaGroup3 ? data.IDGroup3 : '',
                         nameGroup3: data.tblHangHoaGroup3 ? data.tblHangHoaGroup3.TenNhomHang : '',
-                        path: data.PATH,
-                        listLink: data.mtblLinkGetPrices ? data.mtblLinkGetPrices : null,
+                        part: data.PART,
+                        listLink: data.mtblLinkGetPrices ? data.mtblLinkGetPrices : [],
                     },
                 }
                 res.json(result)
