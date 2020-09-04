@@ -12,6 +12,7 @@ let apiHangHoaGroup2 = require('./hang-hoa-group2');
 let apiHangHoaGroup3 = require('./hang-hoa-group3');
 const bodyParser = require('body-parser');
 var mtblLinkGetPrice = require('../tables/tblLinkGetPrice');
+const { json } = require('sequelize/types');
 
 
 async function pushNamereturnIDGroup2(db, name, idGroup1) {
@@ -66,7 +67,6 @@ async function checkGroup3ExitsGroup2(db, idGroup2, idGroup3, nameGroup3) {
     if (check.ID === idGroup3) return true
     else return false
 }
-
 module.exports = {
     // import_file
     importFile: (req, res) => {
@@ -74,11 +74,11 @@ module.exports = {
         console.log(body);
         var data = JSON.parse(body.data);
         database.connectDatabase().then(async db => {
-            var idGroup1;
-            var idGroup2;
-            var idGroup3;
-            var idHangHoa;
             for (var i = 0; i < data.length; i++) {
+                var idGroup1;
+                var idGroup2;
+                var idGroup3;
+                var idHangHoa;
                 var checkGroup1 = await mtblHangHoaGroup1(db).findOne({
                     where: { TenNhomHang: data[i]['Nhóm cấp 1'] }
                 });
@@ -120,6 +120,13 @@ module.exports = {
                         else idGroup3 = null
                     }
                 } else {
+                    if (!data[i]['Nhóm cấp 1']) {
+                        var result = {
+                            status: Constant.STATUS.FAIL,
+                            message: Constant.MESSAGE.DATA_FAIL,
+                        }
+                        return res.json(result)
+                    }
                     var group1 = await mtblHangHoaGroup1(db).create({
                         TenNhomHang: data[i]['Nhóm cấp 1'],
                     });
