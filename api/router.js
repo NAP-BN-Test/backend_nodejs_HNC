@@ -21,6 +21,8 @@ module.exports = function (app) {
     app.route('/hnc/update_goods_group1').post(checkToken.checkToken, mtblHangHoaGroup1.updateGoodsGroup1);
     app.route('/hnc/delete_goods_group1').post(checkToken.checkToken, mtblHangHoaGroup1.deleteGoodsGroup1);
     app.route('/hnc/get_list_goods_group1').post(checkToken.checkToken, mtblHangHoaGroup1.getListGoodsGroup1);
+    app.route('/hnc/get_groups_from_group1').post(checkToken.checkToken, mtblHangHoaGroup1.getGroupsFromGroup1);
+    app.route('/hnc/add_goods_groups').post(checkToken.checkToken, mtblHangHoaGroup1.addGoodsGroups);
 
     // Hàng hóa group 2
     var mtblHangHoaGroup2 = require('./controllers/hang-hoa-group2');

@@ -40,7 +40,7 @@ async function checkIn(array, value) {
 }
 
 async function checkGroup(db, idGroup1, idGroup2, idGroup3) {
-    if (!idGroup1 && !idGroup1 && !idGroup1) return true
+    if (!idGroup1 && !idGroup2 && !idGroup3) return true
     if (!idGroup1) return false
     else if (idGroup2) {
         let check1 = await mtblHangHoaGroup2(db).findAll({ where: { IDGroup1: idGroup1 } })
@@ -52,11 +52,10 @@ async function checkGroup(db, idGroup1, idGroup2, idGroup3) {
             if (idGroup3) {
                 let check2 = await mtblHangHoaGroup3(db).findAll({ where: { IDGroup2: idGroup2 } })
                 var array = [];
-                check1.forEach(item => {
+                check2.forEach(item => {
                     array.push(item.ID);
                 })
                 if (checkIn(array, idGroup3)) {
-                    console.log(check1);
                     return true
                 }
                 else return false
@@ -76,6 +75,7 @@ module.exports = {
     // add_goods : thêm hàng hóa
     addGoods: (req, res) => {
         let body = req.body;
+        console.log(body);
         var link = JSON.parse(body.items);
         database.connectDatabase().then(async db => {
             try {

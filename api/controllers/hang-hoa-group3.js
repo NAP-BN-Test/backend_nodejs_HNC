@@ -21,13 +21,18 @@ async function getListHangHoa(db, listID) {
 }
 
 async function deletetblHangHoaGroup3(db, listID) {
-    let list = await getListHangHoa(db, listID);
-    await apiHangHoa.deleteHangHoa(db, list);
-    await mtblHangHoaGroup3(db).destroy({
-        where: {
-            ID: { [Op.in]: listID },
-        }
-    });
+    try {
+        let list = await getListHangHoa(db, listID);
+        await apiHangHoa.deleteHangHoa(db, list);
+        await mtblHangHoaGroup3(db).destroy({
+            where: {
+                ID: { [Op.in]: listID },
+            }
+        });
+
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 module.exports = {
