@@ -71,6 +71,7 @@ async function checkGroup(db, idGroup1, idGroup2, idGroup3) {
 }
 
 module.exports = {
+    checkGroup,
     deleteHangHoa,
     // add_goods : thêm hàng hóa
     addGoods: (req, res) => {

@@ -51,4 +51,13 @@ module.exports = function (app) {
     app.route('/hnc/update_link_get_price').post(checkToken.checkToken, mtbllinkgetprice.updateLinkGetPrice);
     app.route('/hnc/delete_link_get_price').post(checkToken.checkToken, mtbllinkgetprice.deleteLinkGetPrice);
     app.route('/hnc/get_list_link_get_price').post(checkToken.checkToken, mtbllinkgetprice.getListLinkGetPrice);
+
+    // menu
+    var mNhomHangHoa = require('./controllers/nhom-hang-hoa')
+    app.route('/hnc/update_group').post(checkToken.checkToken, mNhomHangHoa.updateGroup);
+
+    // import_file
+    var mImportFile = require('./controllers/import_file')
+    app.route('/hnc/import_file').post(checkToken.checkToken, mImportFile.importFile);
+
 }

@@ -214,7 +214,7 @@ module.exports = {
     getGroupsFromGroup1: (req, res) => {
         let body = req.body;
         database.connectDatabase().then(async db => {
-            var array = [];
+            var arrayf = [];
             var itemPerPage = 10000;
             var page = 1;
             if (body.itemPerPage) {
@@ -232,7 +232,7 @@ module.exports = {
                         where: { IDGroup1: data[i].ID }
                     })
                     if (check.length === 0) {
-                        array.push({
+                        arrayf.push({
                             idGroup1: data[i].ID,
                             tenNhomHang1: data[i].TenNhomHang ? data[i].TenNhomHang : '',
                             flagSelect1: data[i].FlagSelect ? data[i].FlagSelect : '',
@@ -253,7 +253,7 @@ module.exports = {
                                 where: { IDGroup2: group2[j].ID }
                             })
                             if (check.length === 0) {
-                                array.push({
+                                arrayf.push({
                                     idGroup1: data[i].ID,
                                     tenNhomHang1: data[i].TenNhomHang ? data[i].TenNhomHang : '',
                                     flagSelect1: data[i].FlagSelect ? data[i].FlagSelect : '',
@@ -270,7 +270,7 @@ module.exports = {
                                 where: { IDGroup2: group2[j].ID }
                             }).then(group3 => {
                                 for (var e = 0; e < group3.length; e++) {
-                                    array.push({
+                                    arrayf.push({
                                         idGroup1: data[i].ID,
                                         tenNhomHang1: data[i].TenNhomHang ? data[i].TenNhomHang : '',
                                         flagSelect1: data[i].FlagSelect ? data[i].FlagSelect : '',
@@ -287,28 +287,41 @@ module.exports = {
                     })
                 }
             })
-            var count1 = await mtblHangHoaGroup1(db).count();
-            var count2 = await mtblHangHoaGroup2(db).count();
-            var count3 = await mtblHangHoaGroup3(db).count();
-            var idGroup1 = [];
-            var idGroup2 = [];
-            await mtblHangHoaGroup2(db).findAll({ IDGroup1: null }).then(data => {
-                data.forEach(item => {
-                    idGroup1.push(item.IDGroup1);
+            var arrayl = [];
+            var count = 0;
+            if (body.searchKey) {
+                arrayf.forEach(item => {
+                    if (item.tenNhomHang1.toUpperCase().search(body.searchKey.toUpperCase()) !== -1 || item.tenNhomHang2.toUpperCase().search(body.searchKey.toUpperCase()) !== -1 || item.tenNhomHang3.toUpperCase().search(body.searchKey.toUpperCase()) !== -1) {
+                        arrayl.push(item);
+                        count += 1;
+                    }
                 })
-            });
-            await mtblHangHoaGroup3(db).findAll({ IDGroup2: null }).then(data => {
-                data.forEach(item => {
-                    idGroup2.push(item.IDGroup2);
-                })
-            });
-            var count1has2 = countDulicant(idGroup1);
-            var count2has3 = countDulicant(idGroup2);
+            } else {
+                var count1 = await mtblHangHoaGroup1(db).count();
+                var count2 = await mtblHangHoaGroup2(db).count();
+                var count3 = await mtblHangHoaGroup3(db).count();
+                var idGroup1 = [];
+                var idGroup2 = [];
+                await mtblHangHoaGroup2(db).findAll({ IDGroup1: null }).then(data => {
+                    data.forEach(item => {
+                        idGroup1.push(item.IDGroup1);
+                    })
+                });
+                await mtblHangHoaGroup3(db).findAll({ IDGroup2: null }).then(data => {
+                    data.forEach(item => {
+                        idGroup2.push(item.IDGroup2);
+                    })
+                });
+                var count1has2 = countDulicant(idGroup1);
+                var count2has3 = countDulicant(idGroup2);
+                arrayl = arrayf;
+                count = count3 + (count1 - count1has2) + (count2 - count2has3);
+            }
             var result = {
                 status: Constant.STATUS.SUCCESS,
                 message: '',
-                array: array,
-                all: count3 + (count1 - count1has2) + (count2 - count2has3),
+                array: arrayl,
+                all: count,
             }
             res.json(result)
 
