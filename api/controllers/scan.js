@@ -1,18 +1,18 @@
 const Result = require('../constants/result');
 const Constant = require('../constants/constant');
 const Op = require('sequelize').Op;
+const FormData = require("form-data");
+var moment = require('moment');
 var database = require('../database');
 var mSysUser = require('../tables/tblSysUser');
 var mHangHoa = require('../tables/tblHangHoa');
 const mtblHangHoaGroup1 = require('../tables/tblHangHoaGroup1')
 const mtblHangHoaGroup2 = require('../tables/tblHangHoaGroup2')
 const mtblHangHoaGroup3 = require('../tables/tblHangHoaGroup3')
-let apiHangHoa = require('./hang-hoa');
-let apiHangHoaGroup2 = require('./hang-hoa-group2');
-let apiHangHoaGroup3 = require('./hang-hoa-group3');
+var mtblPrice = require('../tables/tblPrice');
 const bodyParser = require('body-parser');
 var mtblLinkGetPrice = require('../tables/tblLinkGetPrice');
-var https = require('https');
+const Sequelize = require('sequelize');
 const axios = require('axios');
 function filterArray(value, array) {
     var check = false;
@@ -194,6 +194,7 @@ module.exports = {
         let body = req.body;
         var data = JSON.parse(body.data);
         var array = data;
+
         database.connectDatabase().then(async db => {
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
@@ -211,12 +212,22 @@ module.exports = {
                                 url: 'https://www.hanoicomputer.vn/hdd-wd-my-book-duo-20tb-wdbfbe0200jbk-sesn/p42827.html',
                             }
                             await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, body1)
-                                .then((res) => {
-                                    console.log(res.data);
-                                    console.log('dkfjhsdklhdfjkghdfjkh');
-                                    array[i]['priceHNC'] = res.data.price;
-                                    array[i]['link'] = link[j].LinkAddress;
-                                    array[i]['number'] = link[j].EnumLoaiLink;
+                                .then(async (res) => {
+                                    var price = res.data.price.replace(/,/g, '')
+                                    array[i]['priceHNC'] = price;
+                                    var pricedb = await mtblPrice(db).findOne({
+                                        order: [
+                                            Sequelize.fn('max', Sequelize.col('DateGet')),
+                                        ],
+                                        group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
+                                    })
+                                    if (pricedb.Price != price) {
+
+                                        await mtblPrice(db).create({
+                                            IDLink: link[j].ID,
+                                            Price: Number(price),
+                                        })
+                                    }
                                 })
                                 .catch(err => console.log(err))
                         }
@@ -224,13 +235,22 @@ module.exports = {
                             let body = {
                                 url: link[j].LinkAddress,
                             }
-                            console.log(link[j].LinkAddress);
-
                             await axios.post(`http://163.44.192.123:5000/get_prices_gvn`, body)
-                                .then((res) => {
-                                    array[i]['priceGearVN'] = res.data.price;
-                                    array[i]['link'] = link[j].LinkAddress;
-                                    array[i]['number'] = link[j].EnumLoaiLink;
+                                .then(async (res) => {
+                                    var price = res.data.price.replace(/,/g, '')
+                                    array[i]['priceGearVN'] = price;
+                                    var pricedb = await mtblPrice(db).findOne({
+                                        order: [
+                                            Sequelize.fn('max', Sequelize.col('DateGet')),
+                                        ],
+                                        group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
+                                    })
+                                    if (pricedb.Price != price) {
+                                        await mtblPrice(db).create({
+                                            IDLink: link[j].ID,
+                                            Price: Number(price),
+                                        })
+                                    }
 
                                 })
                                 .catch(err => console.log(err))
@@ -241,11 +261,22 @@ module.exports = {
                             }
 
                             await axios.post(`http://163.44.192.123:5000/get_prices_pa`, body)
-                                .then((res) => {
-                                    array[i]['pricePhucAnh'] = res.data.price;
-                                    array[i]['link'] = link[j].LinkAddress;
-                                    array[i]['number'] = link[j].EnumLoaiLink;
+                                .then(async (res) => {
+                                    var price = res.data.price.replace(/,/g, '')
+                                    array[i]['pricePhucAnh'] = price;
+                                    var pricedb = await mtblPrice(db).findOne({
+                                        order: [
+                                            Sequelize.fn('max', Sequelize.col('DateGet')),
+                                        ],
+                                        group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
+                                    })
+                                    if (pricedb.Price != price) {
+                                        await mtblPrice(db).create({
+                                            IDLink: link[j].ID,
+                                            Price: Number(price),
 
+                                        })
+                                    }
                                 })
                                 .catch(err => console.log(err))
                         }
@@ -256,11 +287,21 @@ module.exports = {
                             console.log(link[j].LinkAddress);
 
                             await axios.post(`http://163.44.192.123:5000/get_prices_ap`, body)
-                                .then((res) => {
-                                    array[i]['priceAnPhat'] = res.data.price;
-                                    array[i]['link'] = link[j].LinkAddress;
-                                    array[i]['number'] = link[j].EnumLoaiLink;
-
+                                .then(async (res) => {
+                                    var price = res.data.price.replace(/,/g, '')
+                                    array[i]['priceAnPhat'] = price;
+                                    var pricedb = await mtblPrice(db).findOne({
+                                        order: [
+                                            Sequelize.fn('max', Sequelize.col('DateGet')),
+                                        ],
+                                        group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
+                                    })
+                                    if (pricedb.Price != price) {
+                                        await mtblPrice(db).create({
+                                            IDLink: link[j].ID,
+                                            Price: Number(price),
+                                        })
+                                    }
                                 })
                                 .catch(err => console.log(err))
                         }
@@ -270,10 +311,21 @@ module.exports = {
                             }
 
                             await axios.post(`http://163.44.192.123:5000/get_prices_pv`, body)
-                                .then((res) => {
-                                    array[i]['pricePhongVu'] = res.data.price;
-                                    array[i]['link'] = link[j].LinkAddress;
-                                    array[i]['number'] = link[j].EnumLoaiLink;
+                                .then(async (res) => {
+                                    var price = res.data.price.replace(/,/g, '')
+                                    array[i]['pricePhongVu'] = price;
+                                    var pricedb = await mtblPrice(db).findOne({
+                                        order: [
+                                            Sequelize.fn('max', Sequelize.col('DateGet')),
+                                        ],
+                                        group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
+                                    })
+                                    if (pricedb.Price != price) {
+                                        await mtblPrice(db).create({
+                                            IDLink: link[j].ID,
+                                            Price: Number(price),
+                                        })
+                                    }
                                 })
                                 .catch(err => console.log(err))
                         }
