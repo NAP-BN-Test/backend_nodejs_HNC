@@ -12,7 +12,6 @@ let apiHangHoaGroup2 = require('./hang-hoa-group2');
 let apiHangHoaGroup3 = require('./hang-hoa-group3');
 const bodyParser = require('body-parser');
 var mtblLinkGetPrice = require('../tables/tblLinkGetPrice');
-const { json } = require('sequelize/types');
 
 
 async function pushNamereturnIDGroup2(db, name, idGroup1) {
@@ -70,154 +69,160 @@ async function checkGroup3ExitsGroup2(db, idGroup2, idGroup3, nameGroup3) {
 module.exports = {
     // import_file
     importFile: (req, res) => {
-        let body = req.body;
-        console.log(body);
-        var data = JSON.parse(body.data);
-        database.connectDatabase().then(async db => {
-            for (var i = 0; i < data.length; i++) {
-                var idGroup1;
-                var idGroup2;
-                var idGroup3;
-                var idHangHoa;
-                var checkGroup1 = await mtblHangHoaGroup1(db).findOne({
-                    where: { TenNhomHang: data[i]['Nhóm cấp 1'] }
-                });
-                if (checkGroup1) {
-                    idGroup1 = checkGroup1.ID
-                    if (pushNamereturnIDGroup2(db, data[i]['Nhóm cấp 2'], idGroup1)) {
-                        idGroup2 = await pushNamereturnIDGroup2(db, data[i]['Nhóm cấp 2'], idGroup1)
-                        if (data[i]['Nhóm cấp 3']) {
-                            var g3 = await pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2)
-                            if (g3) {
-                                idGroup3 = g3;
-                            } else {
-                                var group3 = await mtblHangHoaGroup3(db).create({
-                                    TenNhomHang: data[i]['Nhóm cấp 3'],
-                                    IDGroup2: idGroup2,
-                                })
-                                idGroup3 = group3.ID
+        try {
+            let body = req.body;
+            var data = JSON.parse(body.data);
+            database.connectDatabase().then(async db => {
+                for (var i = 0; i < data.length; i++) {
+                    var idGroup1;
+                    var idGroup2;
+                    var idGroup3;
+                    var idHangHoa;
+                    var checkGroup1 = await mtblHangHoaGroup1(db).findOne({
+                        where: { TenNhomHang: data[i]['Nhóm cấp 1'] }
+                    });
+                    if (checkGroup1) {
+                        idGroup1 = checkGroup1.ID
+                        if (pushNamereturnIDGroup2(db, data[i]['Nhóm cấp 2'], idGroup1)) {
+                            idGroup2 = await pushNamereturnIDGroup2(db, data[i]['Nhóm cấp 2'], idGroup1)
+                            if (data[i]['Nhóm cấp 3']) {
+                                var g3 = await pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2)
+                                if (g3) {
+                                    idGroup3 = g3;
+                                } else {
+                                    var group3 = await mtblHangHoaGroup3(db).create({
+                                        TenNhomHang: data[i]['Nhóm cấp 3'],
+                                        IDGroup2: idGroup2,
+                                    })
+                                    idGroup3 = group3.ID
+                                }
                             }
+                            else idGroup3 = null
                         }
-                        else idGroup3 = null
-                    }
-                    else {
+                        else {
+                            var group2 = await mtblHangHoaGroup2(db).create({
+                                TenNhomHang: data[i]['Nhóm cấp 2'],
+                                IDGroup1: idGroup1,
+                            })
+                            idGroup2 = group2.ID
+                            if (data[i]['Nhóm cấp 3']) {
+                                if (pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2)) {
+                                    idGroup3 = await pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2);
+                                } else {
+                                    var group3 = await mtblHangHoaGroup3(db).create({
+                                        TenNhomHang: data[i]['Nhóm cấp 3'],
+                                        IDGroup2: idGroup2,
+                                    })
+                                    idGroup3 = group3.ID
+                                }
+                            }
+                            else idGroup3 = null
+                        }
+                    } else {
+                        if (!data[i]['Nhóm cấp 1']) {
+                            var result = {
+                                status: Constant.STATUS.FAIL,
+                                message: Constant.MESSAGE.DATA_FAIL,
+                            }
+                            return res.json(result)
+                        }
+                        var group1 = await mtblHangHoaGroup1(db).create({
+                            TenNhomHang: data[i]['Nhóm cấp 1'],
+                        });
+                        idGroup1 = group1.ID
                         var group2 = await mtblHangHoaGroup2(db).create({
                             TenNhomHang: data[i]['Nhóm cấp 2'],
                             IDGroup1: idGroup1,
                         })
                         idGroup2 = group2.ID
-                        if (data[i]['Nhóm cấp 3']) {
-                            if (pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2)) {
-                                idGroup3 = await pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2);
-                            } else {
-                                var group3 = await mtblHangHoaGroup3(db).create({
-                                    TenNhomHang: data[i]['Nhóm cấp 3'],
-                                    IDGroup2: idGroup2,
-                                })
-                                idGroup3 = group3.ID
-                            }
+                        var group3 = await mtblHangHoaGroup3(db).create({
+                            TenNhomHang: data[i]['Nhóm cấp 3'],
+                            IDGroup2: idGroup2,
+                        })
+                        idGroup3 = group3.ID
+                    }
+                    var exitsHangHoa = await mHangHoa(db).findOne({
+                        where: {
+                            Code: data[i]['Mã hàng'],
                         }
-                        else idGroup3 = null
+                    })
+                    if (exitsHangHoa) {
+                        idHangHoa = exitsHangHoa.ID
                     }
-                } else {
-                    if (!data[i]['Nhóm cấp 1']) {
-                        var result = {
-                            status: Constant.STATUS.FAIL,
-                            message: Constant.MESSAGE.DATA_FAIL,
-                        }
-                        return res.json(result)
+                    else {
+                        var hanghoa = await mHangHoa(db).create({
+                            NameHangHoa: data[i]['Tên hàng'] ? data[i]['Tên hàng'] : '',
+                            PART: data[i]['Part'] ? data[i]['Part'] : '',
+                            Code: data[i]['Mã hàng'] ? data[i]['Mã hàng'] : '',
+                            IDGroup1: idGroup1,
+                            IDGroup2: idGroup2,
+                            IDGroup3: idGroup3,
+                        })
+                        idHangHoa = hanghoa.ID
                     }
-                    var group1 = await mtblHangHoaGroup1(db).create({
-                        TenNhomHang: data[i]['Nhóm cấp 1'],
-                    });
-                    idGroup1 = group1.ID
-                    var group2 = await mtblHangHoaGroup2(db).create({
-                        TenNhomHang: data[i]['Nhóm cấp 2'],
-                        IDGroup1: idGroup1,
-                    })
-                    idGroup2 = group2.ID
-                    var group3 = await mtblHangHoaGroup3(db).create({
-                        TenNhomHang: data[i]['Nhóm cấp 3'],
-                        IDGroup2: idGroup2,
-                    })
-                    idGroup3 = group3.ID
-                }
-                var exitsHangHoa = await mHangHoa(db).findOne({
-                    where: {
-                        Code: data[i]['Mã hàng'],
+                    if (data[i]['Link HNC']) {
+                        await mtblLinkGetPrice(db).destroy({
+                            where: { IDHangHoa: idHangHoa }
+                        })
+                        await mtblLinkGetPrice(db).create({
+                            IDHangHoa: idHangHoa,
+                            LinkAddress: data[i]['Link HNC'],
+                            EnumLoaiLink: 4
+                        })
                     }
-                })
-                if (exitsHangHoa) {
-                    idHangHoa = exitsHangHoa.ID
+                    if (data[i]['Link An Phát']) {
+                        await mtblLinkGetPrice(db).destroy({
+                            where: { IDHangHoa: idHangHoa }
+                        })
+                        await mtblLinkGetPrice(db).create({
+                            IDHangHoa: idHangHoa,
+                            LinkAddress: data[i]['Link An Phát'],
+                            EnumLoaiLink: 1
+                        })
+                    }
+                    if (data[i]['Link Phúc Anh']) {
+                        await mtblLinkGetPrice(db).destroy({
+                            where: { IDHangHoa: idHangHoa }
+                        })
+                        await mtblLinkGetPrice(db).create({
+                            IDHangHoa: idHangHoa,
+                            LinkAddress: data[i]['Link Phúc Anh'],
+                            EnumLoaiLink: 2
+                        })
+                    }
+                    if (data[i]['Link PV']) {
+                        await mtblLinkGetPrice(db).destroy({
+                            where: { IDHangHoa: idHangHoa }
+                        })
+                        await mtblLinkGetPrice(db).create({
+                            IDHangHoa: idHangHoa,
+                            LinkAddress: data[i]['Link HNC'],
+                            EnumLoaiLink: 0
+                        })
+                    }
+                    if (data[i]['Link GearVN']) {
+                        await mtblLinkGetPrice(db).destroy({
+                            where: { IDHangHoa: idHangHoa }
+                        })
+                        await mtblLinkGetPrice(db).create({
+                            IDHangHoa: idHangHoa,
+                            LinkAddress: data[i]['Link HNC'],
+                            EnumLoaiLink: 3
+                        })
+                    }
                 }
-                else {
-                    var hanghoa = await mHangHoa(db).create({
-                        NameHangHoa: data[i]['Tên hàng'] ? data[i]['Tên hàng'] : '',
-                        PART: data[i]['Part'] ? data[i]['Part'] : '',
-                        Code: data[i]['Mã hàng'] ? data[i]['Mã hàng'] : '',
-                        IDGroup1: idGroup1,
-                        IDGroup2: idGroup2,
-                        IDGroup3: idGroup3,
-                    })
-                    idHangHoa = hanghoa.ID
-                    console.log(idHangHoa);
+                var result = {
+                    status: Constant.STATUS.SUCCESS,
+                    message: 'Thao tác thành công',
                 }
-                if (data[i]['Link HNC']) {
-                    await mtblLinkGetPrice(db).destroy({
-                        where: { IDHangHoa: idHangHoa }
-                    })
-                    await mtblLinkGetPrice(db).create({
-                        IDHangHoa: idHangHoa,
-                        LinkAddress: data[i]['Link HNC'],
-                        EnumLoaiLink: 4
-                    })
-                }
-                if (data[i]['Link An Phát']) {
-                    await mtblLinkGetPrice(db).destroy({
-                        where: { IDHangHoa: idHangHoa }
-                    })
-                    await mtblLinkGetPrice(db).create({
-                        IDHangHoa: idHangHoa,
-                        LinkAddress: data[i]['Link An Phát'],
-                        EnumLoaiLink: 1
-                    })
-                }
-                if (data[i]['Link Phúc Anh']) {
-                    await mtblLinkGetPrice(db).destroy({
-                        where: { IDHangHoa: idHangHoa }
-                    })
-                    await mtblLinkGetPrice(db).create({
-                        IDHangHoa: idHangHoa,
-                        LinkAddress: data[i]['Link Phúc Anh'],
-                        EnumLoaiLink: 2
-                    })
-                }
-                if (data[i]['Link PV']) {
-                    await mtblLinkGetPrice(db).destroy({
-                        where: { IDHangHoa: idHangHoa }
-                    })
-                    await mtblLinkGetPrice(db).create({
-                        IDHangHoa: idHangHoa,
-                        LinkAddress: data[i]['Link HNC'],
-                        EnumLoaiLink: 0
-                    })
-                }
-                if (data[i]['Link GearVN']) {
-                    await mtblLinkGetPrice(db).destroy({
-                        where: { IDHangHoa: idHangHoa }
-                    })
-                    await mtblLinkGetPrice(db).create({
-                        IDHangHoa: idHangHoa,
-                        LinkAddress: data[i]['Link HNC'],
-                        EnumLoaiLink: 3
-                    })
-                }
-            }
+                res.json(result)
+            })
+
+        } catch (error) {
             var result = {
-                status: Constant.STATUS.SUCCESS,
-                message: 'Thao tác thành công',
+                status: Constant.STATUS.FAIL,
             }
             res.json(result)
-        })
+        }
     }
 }

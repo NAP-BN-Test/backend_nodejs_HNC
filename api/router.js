@@ -60,4 +60,9 @@ module.exports = function (app) {
     var mImportFile = require('./controllers/import_file')
     app.route('/hnc/import_file').post(checkToken.checkToken, mImportFile.importFile);
 
+    // scan_price
+    var mScanPrice = require('./controllers/scan')
+    app.route('/hnc/search_goods').post(checkToken.checkToken, mScanPrice.functionSearchGoods);
+    app.route('/hnc/scan_price').post(checkToken.checkToken, mScanPrice.functionScanPrice);
+
 }
