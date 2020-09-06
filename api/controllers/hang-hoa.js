@@ -143,6 +143,7 @@ module.exports = {
         database.connectDatabase().then(async db => {
             try {
                 let listUpdate = [];
+                console.log(body);
                 let checkGroupExits = await checkGroup(db, body.idGroup1, body.idGroup2, body.idGroup3);
                 if (!checkGroupExits) {
                     return res.json(Result.ERROR_DATA);
@@ -183,7 +184,6 @@ module.exports = {
                 await mtblLinkGetPrice(db).destroy({
                     where: { IDHangHoa: body.id }
                 })
-                console.log(body.items);
                 if (body.items) {
                     var listObjLink = JSON.parse(body.items);
                     for (var i = 0; i < listObjLink.length; i++) {
@@ -280,7 +280,6 @@ module.exports = {
                 offset: itemPerPage * (page - 1),
                 limit: itemPerPage
             }).then(data => {
-
                 data.forEach(elm => {
                     let listLink = [];
                     if (elm.tblLinkGetPrices)

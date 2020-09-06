@@ -142,12 +142,12 @@ module.exports = {
         database.connectDatabase().then(async db => {
 
             try {
-                let listIDJson = body.listID;
+                let listIDJson = JSON.parse(body.listID);
                 let listID = [];
                 listIDJson.forEach(item => {
                     listID.push(Number(item + ""));
                 });
-                deleteHangHoaGroup1(db, listID);
+                await deleteHangHoaGroup1(db, listID);
 
                 res.json(Result.ACTION_SUCCESS);
 
@@ -224,8 +224,8 @@ module.exports = {
             }
             await mtblHangHoaGroup1(db).findAll({
                 order: [['ID', 'DESC']],
-                offset: itemPerPage * (page - 1),
-                limit: itemPerPage
+                // offset: itemPerPage * (page - 1),
+                // limit: itemPerPage
             }).then(async data => {
                 for (var i = 0; i < data.length; i++) {
                     var check = await mtblHangHoaGroup2(db).findAll({
