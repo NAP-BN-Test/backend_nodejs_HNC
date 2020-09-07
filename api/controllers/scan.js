@@ -95,97 +95,139 @@ async function getPriceFromService(key, obj, array) {
 }
 
 async function createPrice(objLink, db, objResult) {
-    for (var j = 0; j < objLink.length; j++) {
+    try {
+        for (var j = 0; j < objLink.length; j++) {
+            var pricedb = await mtblPrice(db).findOne({
+                order: [
+                    Sequelize.fn('max', Sequelize.col('DateGet')),
+                ],
+                group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
+                where: { IDLink: objLink[j].ID }
+            })
+            if (pricedb) {
+                if (objLink[j].EnumLoaiLink === 4) {
+                    if (pricedb.Price != objResult.priceHNC) {
+                        await mtblPrice(db).create({
+                            IDLink: objLink[j].ID,
+                            Price: objResult.priceHNC ? objResult.priceHNC : 0,
+                        })
+                    }
+                }
+                if (objLink[j].EnumLoaiLink === 3) {
+                    if (pricedb.Price != objResult.priceGearVN) {
+                        await mtblPrice(db).create({
+                            IDLink: objLink[j].ID,
+                            Price: objResult.priceGearVN ? objResult.priceGearVN : 0,
+                        })
+                    }
+                }
+                if (objLink[j].EnumLoaiLink === 2) {
+                    if (pricedb.Price != objResult.pricePhucAnh) {
+                        await mtblPrice(db).create({
+                            IDLink: objLink[j].ID,
+                            Price: objResult.pricePhucAnh ? objResult.pricePhucAnh : 0,
+                        })
+                    }
+                }
+                if (objLink[j].EnumLoaiLink === 1) {
+                    if (pricedb.Price != objResult.priceAnPhat) {
+                        await mtblPrice(db).create({
+                            IDLink: objLink[j].ID,
+                            Price: objResult.priceAnPhat ? objResult.priceAnPhat : 0,
+                        })
+                    }
+                }
+                if (objLink[j].EnumLoaiLink === 0) {
+                    if (pricedb.Price != objResult.pricePhongVu) {
+                        await mtblPrice(db).create({
+                            IDLink: objLink[j].ID,
+                            Price: objResult.pricePhongVu ? objResult.pricePhongVu : 0,
+                        })
+                    }
+                }
+            } else {
+                if (objLink[j].EnumLoaiLink === 4) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.priceHNC ? objResult.priceHNC : 0,
+                    })
+                }
+                if (objLink[j].EnumLoaiLink === 3) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.priceGearVN ? objResult.priceGearVN : 0,
+                    })
+                }
+                if (objLink[j].EnumLoaiLink === 2) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.pricePhucAnh ? objResult.pricePhucAnh : 0,
+                    })
+                }
+                if (objLink[j].EnumLoaiLink === 1) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.priceAnPhat ? objResult.priceAnPhat : 0,
+                    })
+                }
+                if (objLink[j].EnumLoaiLink === 0) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.pricePhongV ? objResult.pricePhongVu : 0,
+                    })
+                }
+            }
+        }
+
+    } catch (error) {
+        console.log(error + '');
+    }
+}
+
+function convertStringToList(string) {
+    let result = {};
+    if (string) {
+        result = string.split(";")
+    }
+    return result;
+}
+
+async function getPriceFromDatabase(obj, db) {
+    obj['priceHNC'] = 0;
+    obj['priceGearVN'] = 0;
+    obj['pricePhucAnh'] = 0;
+    obj['priceAnPhat'] = 0;
+    obj['pricePhongVu'] = 0;
+    var links = await mtblLinkGetPrice(db).findAll({
+        where: { IDHangHoa: obj.idHangHoa }
+    })
+    for (var j = 0; j < links.length; j++) {
         var pricedb = await mtblPrice(db).findOne({
             order: [
                 Sequelize.fn('max', Sequelize.col('DateGet')),
             ],
             group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
-            where: { IDLink: objLink[j].ID }
+            where: { IDLink: links[j].ID }
         })
         if (pricedb) {
-            if (objLink[j].EnumLoaiLink === 4) {
-                if (pricedb.Price != objResult.priceHNC) {
-                    await mtblPrice(db).create({
-                        IDLink: objLink[j].ID,
-                        Price: objResult.priceHNC,
-                    })
-                }
+            if (links[j].EnumLoaiLink === 4) {
+                obj['priceHNC'] = pricedb.Price ? pricedb.Price : 0;
             }
-            if (objLink[j].EnumLoaiLink === 3) {
-                if (pricedb.Price != objResult.priceGearVN) {
-                    await mtblPrice(db).create({
-                        IDLink: objLink[j].ID,
-                        Price: objResult.priceGearVN,
-                    })
-                }
+            if (links[j].EnumLoaiLink === 3) {
+                obj['priceGearVN'] = pricedb.Price ? pricedb.Price : 0;
             }
-            if (objLink[j].EnumLoaiLink === 2) {
-                if (pricedb.Price != objResult.pricePhucAnh) {
-                    await mtblPrice(db).create({
-                        IDLink: objLink[j].ID,
-                        Price: objResult.pricePhucAnh,
-                    })
-                }
+            if (links[j].EnumLoaiLink === 2) {
+                obj['pricePhucAnh'] = pricedb.Price ? pricedb.Price : 0;
             }
-            if (objLink[j].EnumLoaiLink === 1) {
-                if (pricedb.Price != objResult.priceAnPhat) {
-                    await mtblPrice(db).create({
-                        IDLink: objLink[j].ID,
-                        Price: objResult.priceAnPhat,
-                    })
-                }
+            if (links[j].EnumLoaiLink === 1) {
+                obj['priceAnPhat'] = pricedb.Price ? pricedb.Price : 0;
             }
-            if (objLink[j].EnumLoaiLink === 0) {
-                if (pricedb.Price != objResult.pricePhongVu) {
-                    await mtblPrice(db).create({
-                        IDLink: objLink[j].ID,
-                        Price: objResult.pricePhongVu,
-                    })
-                }
-            }
-        } else {
-            if (objLink[j].EnumLoaiLink === 4) {
-                await mtblPrice(db).create({
-                    IDLink: objLink[j].ID,
-                    Price: objResult.priceHNC,
-                })
-            }
-            if (objLink[j].EnumLoaiLink === 3) {
-                await mtblPrice(db).create({
-                    IDLink: objLink[j].ID,
-                    Price: objResult.priceGearVN,
-                })
-            }
-            if (objLink[j].EnumLoaiLink === 2) {
-                await mtblPrice(db).create({
-                    IDLink: objLink[j].ID,
-                    Price: objResult.pricePhucAnh,
-                })
-            }
-            if (objLink[j].EnumLoaiLink === 1) {
-                await mtblPrice(db).create({
-                    IDLink: objLink[j].ID,
-                    Price: objResult.priceAnPhat,
-                })
-            }
-            if (objLink[j].EnumLoaiLink === 0) {
-                await mtblPrice(db).create({
-                    IDLink: objLink[j].ID,
-                    Price: objResult.pricePhongVu,
-                })
+            if (links[j].EnumLoaiLink === 0) {
+                obj['pricePhongVu'] = pricedb.Price ? pricedb.Price : 0;
             }
         }
     }
-}
-
-function convertStringToList(string) {
-    let result = [];
-    if (string) {
-        result = string.split(";")
-        console.log(result);
-    }
-    return result;
+    return obj
 }
 
 module.exports = {
@@ -193,6 +235,7 @@ module.exports = {
     functionSearchGoods: async (req, res) => {
         let body = req.body;
         let where = {};
+        console.log(body);
         let whereSearch = [];
         if (body.goodsKey) {
             whereSearch = [
@@ -284,9 +327,9 @@ module.exports = {
                 order: [['ID', 'DESC']],
                 offset: itemPerPage * (page - 1),
                 limit: itemPerPage
-            }).then(data => {
+            }).then(async data => {
                 for (var i = 0; i < data.length; i++) {
-                    array.push({
+                    var obj = {
                         stt: Number(i) + 1,
                         idGroup1: data[i].tblHangHoaGroup1 ? data[i].IDGroup1 : '',
                         tenNhomHang1: data[i].tblHangHoaGroup1 ? data[i].tblHangHoaGroup1.TenNhomHang : '',
@@ -298,9 +341,9 @@ module.exports = {
                         nameGoods: data[i].NameHangHoa,
                         idHangHoa: data[i].ID,
                         code: data[i].Code
-                    })
-
-
+                    }
+                    obj = await getPriceFromDatabase(obj, db);
+                    array.push(obj)
                 }
             })
             var result = {
@@ -333,6 +376,7 @@ module.exports = {
             var count3 = 0;
             var count4 = 0;
             var count0 = 0;
+            var goods = []
             // push vào obj: obj gửi vào service cào giá
             for (var i = 0; i < data.length; i++) {
                 if (array[i].idHangHoa) {
@@ -341,6 +385,12 @@ module.exports = {
                     })
                     for (var j = 0; j < link.length; j++) {
                         if (link[j].EnumLoaiLink === 4) {
+                            if (count4 == 20) {
+                                if (columnScan.indexOf(4) != -1)
+                                    await getPriceFromService(4, group4, goods);
+                                count4 = 0;
+                                group4 = {};
+                            }
                             group4[count4] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
@@ -348,7 +398,13 @@ module.exports = {
                             count4 += 1;
                         }
                         if (link[j].EnumLoaiLink === 3) {
+                            if (count3 == 20) {
+                                if (columnScan.indexOf(3) != -1)
+                                    await getPriceFromService(3, group3, goods);
+                                count3 = 0;
+                                group3 = {};
 
+                            }
                             group3[count3] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
@@ -356,7 +412,13 @@ module.exports = {
                             count3 += 1
                         }
                         if (link[j].EnumLoaiLink === 2) {
+                            if (count2 == 20) {
+                                if (columnScan.indexOf(2) != -1)
+                                    await getPriceFromService(2, group2, goods);
+                                count2 = 0;
+                                group2 = {};
 
+                            }
                             group2[count2] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
@@ -364,7 +426,13 @@ module.exports = {
                             count2 += 1;
                         }
                         if (link[j].EnumLoaiLink === 1) {
+                            if (count1 == 20) {
+                                if (columnScan.indexOf(1) != -1)
+                                    await getPriceFromService(1, group1, goods);
+                                count1 = 0;
+                                group1 = {};
 
+                            }
                             group1[count1] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
@@ -372,7 +440,13 @@ module.exports = {
                             count1 += 1;
                         }
                         if (link[j].EnumLoaiLink === 0) {
+                            if (count0 == 20) {
+                                if (columnScan.indexOf(0) != -1)
+                                    await getPriceFromService(0, group0, goods);
+                                count0 = 0;
+                                group0 = {};
 
+                            }
                             group0[count0] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
@@ -382,8 +456,11 @@ module.exports = {
                     }
                 }
             }
-            var goods = []
-            // check fontend chọn option gì
+            console.log('group4', count4);
+            console.log('group3', count3);
+            console.log('group2', count2);
+            console.log('group1', count1);
+            console.log('group0', count0);
             if (columnScan.indexOf(4) != -1)
                 await getPriceFromService(4, group4, goods)
             if (columnScan.indexOf(3) != -1)
@@ -394,6 +471,7 @@ module.exports = {
                 await getPriceFromService(1, group1, goods)
             if (columnScan.indexOf(0) != -1)
                 await getPriceFromService(0, group0, goods)
+
             // push giá vào list gửi về FE
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;

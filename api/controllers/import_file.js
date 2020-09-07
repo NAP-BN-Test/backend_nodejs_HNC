@@ -74,8 +74,6 @@ module.exports = {
             var data = JSON.parse(body.data);
             database.connectDatabase().then(async db => {
                 for (var i = 0; i < data.length; i++) {
-                    console.log(data[i]['Mã hàng']);
-                    console.log(i);
                     var idGroup1;
                     var idGroup2;
                     var idGroup3;

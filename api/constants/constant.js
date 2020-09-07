@@ -14,8 +14,8 @@ module.exports = {
     },
 
     USER_ROLE: {
-        STAFF: 'Nhân viên',
-        MANAGER: 'Quản lý'
+        STAFF: 'Nhân Viên',
+        MANAGER: 'Quản Lý'
     },
 
     STATUS: {

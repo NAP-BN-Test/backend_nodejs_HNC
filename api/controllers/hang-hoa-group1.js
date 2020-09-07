@@ -74,6 +74,29 @@ async function checkIn(array, value) {
     return false
 }
 
+async function createAndCheckGroup3(res, db, idGroup2, body) {
+    var existGroup3 = await mtblHangHoaGroup3(db).findAll({
+        where: {
+            [Op.and]: [
+                { IDGroup2: idGroup2 },
+                { TenNhomHang: body.nameGroup3 }
+            ]
+        }
+    })
+    if (existGroup3.length > 0) {
+        var result = {
+            status: Constant.STATUS.FAIL,
+            message: 'Nhóm cấp 3 đã tồn tại. Vui lòng kiểm tra lại!',
+        }
+        return res.json(result);
+    }
+    await mtblHangHoaGroup3(db).create({
+        TenNhomHang: body.nameGroup3 ? body.nameGroup3 : '',
+        FlagSelect: body.flagSelect3 ? body.flagSelect3 : '',
+        IDGroup2: idGroup2,
+    })
+}
+
 module.exports = {
     // add_goods_group1
     addGoodsGroup1: (req, res) => {
@@ -345,11 +368,7 @@ module.exports = {
                             IDGroup1: group1.ID,
                         }).then(async group2 => {
                             if (body.idGroup3 === '-1') {
-                                await mtblHangHoaGroup3(db).create({
-                                    TenNhomHang: body.nameGroup3 ? body.nameGroup3 : '',
-                                    FlagSelect: body.flagSelect3 ? body.flagSelect3 : '',
-                                    IDGroup2: group2.ID,
-                                })
+                                await createAndCheckGroup3(res, db, group2.ID, body)
                             }
                         })
                     }
@@ -362,20 +381,14 @@ module.exports = {
                         IDGroup1: body.idGroup1,
                     }).then(async group2 => {
                         if (body.idGroup3 === '-1') {
-                            await mtblHangHoaGroup3(db).create({
-                                TenNhomHang: body.nameGroup3 ? body.nameGroup3 : '',
-                                FlagSelect: body.flagSelect3 ? body.flagSelect3 : '',
-                                IDGroup2: group2.ID,
-                            })
+                            await createAndCheckGroup3(res, db, group2.ID, body)
+
                         }
                     })
                 } else {
                     if (body.idGroup3 === '-1') {
-                        await mtblHangHoaGroup3(db).create({
-                            TenNhomHang: body.nameGroup3 ? body.nameGroup3 : '',
-                            FlagSelect: body.flagSelect3 ? body.flagSelect3 : '',
-                            IDGroup2: body.idGroup2,
-                        })
+                        await createAndCheckGroup3(res, db, body.idGroup2, body)
+
                     }
                 }
             }

@@ -76,11 +76,34 @@ module.exports = {
     // add_goods : thêm hàng hóa
     addGoods: (req, res) => {
         let body = req.body;
-        console.log(body);
         var link = JSON.parse(body.items);
         database.connectDatabase().then(async db => {
             try {
                 let checkGroupExits = await checkGroup(db, body.idGroup1, body.idGroup2, body.idGroup3);
+                if (body.code) {
+                    var hangHoa = await mHangHoa(db).findAll({
+                        where: { Code: body.code }
+                    })
+                    if (hangHoa.length > 0) {
+                        var result = {
+                            status: Constant.STATUS.FAIL,
+                            message: 'Mã hàng trùng. Vui long kiểm tra lại!',
+                        }
+                        res.json(result);
+                    }
+                }
+                if (body.part) {
+                    var hangHoa = await mHangHoa(db).findAll({
+                        where: { PART: body.part }
+                    })
+                    if (hangHoa.length > 0) {
+                        var result = {
+                            status: Constant.STATUS.FAIL,
+                            message: 'PART trùng. Vui long kiểm tra lại!',
+                        }
+                        res.json(result);
+                    }
+                }
                 if (checkGroupExits) {
                     await mHangHoa(db).create({
                         Code: body.code ? body.code : '',
@@ -131,7 +154,6 @@ module.exports = {
                 }
 
             } catch (error) {
-                console.log(error);
                 res.json(Result.SYS_ERROR_RESULT)
             }
         })
@@ -143,7 +165,6 @@ module.exports = {
         database.connectDatabase().then(async db => {
             try {
                 let listUpdate = [];
-                console.log(body);
                 let checkGroupExits = await checkGroup(db, body.idGroup1, body.idGroup2, body.idGroup3);
                 if (!checkGroupExits) {
                     return res.json(Result.ERROR_DATA);
@@ -201,7 +222,6 @@ module.exports = {
                     res.json(Result.SYS_ERROR_RESULT);
                 })
             } catch (error) {
-                console.log(error);
                 res.json(Result.SYS_ERROR_RESULT)
             }
         })
@@ -224,7 +244,6 @@ module.exports = {
                 res.json(Result.ACTION_SUCCESS);
 
             } catch (error) {
-                console.log(error);
                 res.json(Result.SYS_ERROR_RESULT)
 
             }
@@ -274,7 +293,6 @@ module.exports = {
                 gr3.forEach(item => {
                     idGroup.push(item.ID);
                 })
-                console.log(idGroup);
                 whereSearch.push({ IDGroup1: { [Op.in]: idGroup } },)
                 whereSearch.push({ IDGroup2: { [Op.in]: idGroup } },)
                 whereSearch.push({ IDGroup3: { [Op.in]: idGroup } },)
@@ -358,7 +376,6 @@ module.exports = {
     // get_detail_goods 
     getDetailGoods: (req, res) => {
         let body = req.body;
-        console.log(body);
         database.connectDatabase().then(async db => {
             await mHangHoa(db).findOne({
                 where: { ID: body.id },

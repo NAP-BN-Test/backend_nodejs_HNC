@@ -175,7 +175,6 @@ module.exports = {
                 listUpdate.push({ key: 'UserName', value: body.userName });
 
             if (body.active) {
-                console.log(body.active);
                 listUpdate.push({ key: 'Active', value: body.active });
             }
             if (body.ghiChu || body.ghiChu === '')

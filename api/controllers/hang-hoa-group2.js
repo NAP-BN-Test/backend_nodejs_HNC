@@ -127,7 +127,7 @@ module.exports = {
                 listIDJson.forEach(item => {
                     listID.push(Number(item + ""));
                 });
-                deleteHangHoaGroup2(db, listID);
+                await deleteHangHoaGroup2(db, listID);
 
                 res.json(Result.ACTION_SUCCESS);
 
@@ -168,7 +168,6 @@ module.exports = {
             where = {
                 [Op.and]: whereSearch,
             }
-            console.log(where);
             var count = await mtblHangHoaGroup2(db).count({ where: where });
             var array = [];
             var itemPerPage = 10000;
