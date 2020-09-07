@@ -26,6 +26,17 @@ function filterArray(value, array) {
     return check
 
 }
+function converPriceToNumber(price) {
+    var result;
+    if (price != 0) {
+        result = price.replace(/,/g, '')
+        return Number(result)
+    }
+    else {
+        return 0
+    }
+}
+
 function countDulicant(array_elements) {
     var array = [];
     for (var i = 0; i < array_elements.length; i++) {
@@ -36,6 +47,138 @@ function countDulicant(array_elements) {
     return array.length;
 
 }
+
+function pushDataToArray(data, array) {
+    data.forEach(item => {
+        array.push({
+            key: item.key,
+            code: item.code,
+            price: item.price,
+        })
+    })
+    return array
+}
+
+async function getPriceFromService(key, obj, array) {
+    if (obj['0']) {
+        if (key == 4)
+            await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, obj).then(data => {
+                if (data.data.result)
+                    pushDataToArray(data.data.result, array)
+            })
+        if (key == 0)
+            await axios.post(`http://163.44.192.123:5000/get_prices_pv`, obj).then(data => {
+                if (data.data.result)
+                    pushDataToArray(data.data.result, array)
+
+            })
+        if (key == 1)
+            await axios.post(`http://163.44.192.123:5000/get_prices_ap`, obj).then(data => {
+                if (data.data.result)
+                    pushDataToArray(data.data.result, array)
+
+            })
+        if (key == 2)
+            await axios.post(`http://163.44.192.123:5000/get_prices_pa`, obj).then(data => {
+                if (data.data.result)
+                    pushDataToArray(data.data.result, array)
+
+            })
+        if (key == 3)
+            await axios.post(`http://163.44.192.123:5000/get_prices_gvn`, obj).then(data => {
+                if (data.data.result)
+                    pushDataToArray(data.data.result, array)
+
+            })
+    }
+    return array;
+}
+
+async function createPrice(objLink, db, objResult) {
+    for (var j = 0; j < objLink.length; j++) {
+        var pricedb = await mtblPrice(db).findOne({
+            order: [
+                Sequelize.fn('max', Sequelize.col('DateGet')),
+            ],
+            group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
+            where: { IDLink: objLink[j].ID }
+        })
+        if (pricedb) {
+            if (objLink[j].EnumLoaiLink === 4) {
+                if (pricedb.Price != objResult.priceHNC) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.priceHNC,
+                    })
+                }
+            }
+            if (objLink[j].EnumLoaiLink === 3) {
+                if (pricedb.Price != objResult.priceGearVN) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.priceGearVN,
+                    })
+                }
+            }
+            if (objLink[j].EnumLoaiLink === 2) {
+                if (pricedb.Price != objResult.pricePhucAnh) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.pricePhucAnh,
+                    })
+                }
+            }
+            if (objLink[j].EnumLoaiLink === 1) {
+                if (pricedb.Price != objResult.priceAnPhat) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.priceAnPhat,
+                    })
+                }
+            }
+            if (objLink[j].EnumLoaiLink === 0) {
+                if (pricedb.Price != objResult.pricePhongVu) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.pricePhongVu,
+                    })
+                }
+            }
+        } else {
+            if (objLink[j].EnumLoaiLink === 4) {
+                await mtblPrice(db).create({
+                    IDLink: objLink[j].ID,
+                    Price: objResult.priceHNC,
+                })
+            }
+            if (objLink[j].EnumLoaiLink === 3) {
+                await mtblPrice(db).create({
+                    IDLink: objLink[j].ID,
+                    Price: objResult.priceGearVN,
+                })
+            }
+            if (objLink[j].EnumLoaiLink === 2) {
+                await mtblPrice(db).create({
+                    IDLink: objLink[j].ID,
+                    Price: objResult.pricePhucAnh,
+                })
+            }
+            if (objLink[j].EnumLoaiLink === 1) {
+                await mtblPrice(db).create({
+                    IDLink: objLink[j].ID,
+                    Price: objResult.priceAnPhat,
+                })
+            }
+            if (objLink[j].EnumLoaiLink === 0) {
+                await mtblPrice(db).create({
+                    IDLink: objLink[j].ID,
+                    Price: objResult.pricePhongVu,
+                })
+            }
+        }
+    }
+}
+
 module.exports = {
     // search_goods
     functionSearchGoods: async (req, res) => {
@@ -161,18 +304,22 @@ module.exports = {
     functionScanPrice: async (req, res) => {
         let body = req.body;
         var data = JSON.parse(body.data);
+        var columnScan = JSON.parse(body.columnScan);
+        var arrayScan = [0, 1, 2, 3, 4]
+        if (columnScan.length < 1)
+            columnScan = arrayScan
         var array = data;
         database.connectDatabase().then(async db => {
-            var n4 = {};
-            var n3 = {};
-            var n2 = {};
-            var n1 = {};
-            var n0 = {};
-            var c1 = 0;
-            var c2 = 0;
-            var c3 = 0;
-            var c4 = 0;
-            var c0 = 0;
+            var group4 = {};
+            var group3 = {};
+            var group2 = {};
+            var group1 = {};
+            var group0 = {};
+            var count1 = 0;
+            var count2 = 0;
+            var count3 = 0;
+            var count4 = 0;
+            var count0 = 0;
             for (var i = 0; i < data.length; i++) {
                 if (array[i].idHangHoa) {
                     var link = await mtblLinkGetPrice(db).findAll({
@@ -180,102 +327,58 @@ module.exports = {
                     })
                     for (var j = 0; j < link.length; j++) {
                         if (link[j].EnumLoaiLink === 4) {
-                            n4[c4] = {
+                            group4[count4] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
                             }
-                            c4 += 1;
+                            count4 += 1;
                         }
                         if (link[j].EnumLoaiLink === 3) {
 
-                            n3[c3] = {
+                            group3[count3] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
                             }
-                            c3 += 1
+                            count3 += 1
                         }
                         if (link[j].EnumLoaiLink === 2) {
 
-                            n2[c2] = {
+                            group2[count2] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
                             }
-                            c2 += 1;
+                            count2 += 1;
                         }
                         if (link[j].EnumLoaiLink === 1) {
 
-                            n1[c1] = {
+                            group1[count1] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
                             }
-                            c1 += 1;
+                            count1 += 1;
                         }
                         if (link[j].EnumLoaiLink === 0) {
 
-                            n0[c0] = {
+                            group0[count0] = {
                                 code: data[i].code,
                                 url: link[j].LinkAddress
                             }
-                            c0 += 1;
+                            count0 += 1;
                         }
                     }
                 }
             }
             var goods = []
-            await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, n4).then(data => {
-                if (data.data.result)
-
-                    data.data.result.forEach(item => {
-                        goods.push({
-                            key: item.key,
-                            code: item.code,
-                            price: item.price,
-                        })
-                    })
-            })
-            await axios.post(`http://163.44.192.123:5000/get_prices_pv`, n0).then(data => {
-                if (data.data.result)
-                    data.data.result.forEach(item => {
-                        goods.push({
-                            key: item.key,
-                            code: item.code,
-                            price: item.price,
-                        })
-                    })
-            })
-            await axios.post(`http://163.44.192.123:5000/get_prices_ap`, n1).then(data => {
-                if (data.data.result)
-
-                    data.data.result.forEach(item => {
-                        goods.push({
-                            key: item.key,
-                            code: item.code,
-                            price: item.price,
-                        })
-                    })
-            })
-            await axios.post(`http://163.44.192.123:5000/get_prices_pa`, n2).then(data => {
-                if (data.data.result)
-
-                    data.data.result.forEach(item => {
-                        goods.push({
-                            key: item.key,
-                            code: item.code,
-                            price: item.price,
-                        })
-                    })
-            })
-            await axios.post(`http://163.44.192.123:5000/get_prices_gvn`, n3).then(data => {
-                if (data.data.result)
-
-                    data.data.result.forEach(item => {
-                        goods.push({
-                            key: item.key,
-                            code: item.code,
-                            price: item.price,
-                        })
-                    })
-            })
+            if (columnScan.indexOf(4) != -1)
+                await getPriceFromService(4, group4, goods)
+            if (columnScan.indexOf(3) != -1)
+                await getPriceFromService(3, group3, goods)
+            if (columnScan.indexOf(2) != -1)
+                await getPriceFromService(2, group2, goods)
+            if (columnScan.indexOf(1) != -1)
+                await getPriceFromService(1, group1, goods)
+            if (columnScan.indexOf(0) != -1)
+                await getPriceFromService(0, group0, goods)
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
                 array[i]['priceGearVN'] = 0;
@@ -284,24 +387,27 @@ module.exports = {
                 array[i]['pricePhongVu'] = 0;
                 for (var j = 0; j < goods.length; j++) {
                     if (goods[j].key == 4) {
-                        if (data[i].code == goods[j].key.code)
-                            array[i]['priceHNC'] = goods[j].price;
+                        if (data[i].code == goods[j].code)
+                            array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
                     }
                     if (goods[j].key == 3) {
-                        if (data[i].code == goods[j].key.code)
-                            array[i]['priceGearVN'] = goods[j].price;
+                        if (data[i].code == goods[j].code)
+                            array[i]['priceGearVN'] = converPriceToNumber(goods[j].price);
                     }
                     if (goods[j].key == 2) {
-                        if (data[i].code == goods[j].key.code)
-                            array[i]['pricePhucAnh'] = goods[j].price;
+                        if (data[i].code == goods[j].code)
+                            array[i]['pricePhucAnh'] = converPriceToNumber(goods[j].price);
+
                     }
                     if (goods[j].key == 1) {
-                        if (data[i].code == goods[j].key.code)
-                            array[i]['priceAnPhat'] = goods[j].price;
+                        if (data[i].code == goods[j].code)
+                            array[i]['priceAnPhat'] = converPriceToNumber(goods[j].price);
+
                     }
                     if (goods[j].key == 0) {
-                        if (data[i].code == goods[j].key.code)
-                            array[i]['pricePhongVu'] = goods[j].price;
+                        if (data[i].code == goods[j].code)
+                            array[i]['pricePhongVu'] = converPriceToNumber(goods[j].price);
+
                     }
                 }
             }
@@ -310,226 +416,14 @@ module.exports = {
                 message: '',
                 array: array,
             }
-            console.log(array);
-            res.json(result)
+            res.json(result);
+            for (var i = 0; i < array.length; i++) {
+                var links = await mtblLinkGetPrice(db).findAll({
+                    where: { IDHangHoa: array[i].idHangHoa }
+                })
+                await createPrice(links, db, array[i]);
+            }
         })
-
-
-
-
-
-
-
-
-        //             if (link[j].EnumLoaiLink === 4) {
-        //                 let body1 = {
-        //                     1: {
-        //                         code: 1,
-        //                         url: link[j].LinkAddress,
-        //                     },
-        //                     2: {
-        //                         code: 2,
-        //                         url: link[j].LinkAddress,
-        //                     }85
-
-        //                 }
-        //                 await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, body1)
-        //                     .then(async (res) => {
-        //                         var price;
-        //                         if (res.data.price != 0) {
-        //                             price = res.data.price.replace(/,/g, '')
-        //                         }
-        //                         else {
-        //                             price = 0
-        //                         }
-        //                         array[i]['priceHNC'] = price;
-        //                         var pricedb = await mtblPrice(db).findOne({
-        //                             order: [
-        //                                 Sequelize.fn('max', Sequelize.col('DateGet')),
-        //                             ],
-        //                             group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
-        //                         })
-        //                         if (pricedb) {
-        //                             if (pricedb.Price != price) {
-
-        //                                 await mtblPrice(db).create({
-        //                                     IDLink: link[j].ID,
-        //                                     Price: Number(price),
-        //                                 })
-        //                             }
-        //                         } else {
-        //                             await mtblPrice(db).create({
-        //                                 IDLink: link[j].ID,
-        //                                 Price: Number(price),
-        //                             })
-        //                         }
-        //                     })
-        //                     .catch(err => console.log(err))
-        //             }
-        //             else if (link[j].EnumLoaiLink === 3) {
-        //                 let body = {
-        //                     url: link[j].LinkAddress,
-        //                 }
-        //                 await axios.post(`http://163.44.192.123:5000/get_prices_gvn`, body)
-        //                     .then(async (res) => {
-        //                         var price;
-        //                         if (res.data.price != 0) {
-        //                             price = res.data.price.replace(/,/g, '')
-        //                         }
-        //                         else {
-        //                             price = 0
-        //                         }
-        //                         array[i]['priceGearVN'] = price;
-        //                         var pricedb = await mtblPrice(db).findOne({
-        //                             order: [
-        //                                 Sequelize.fn('max', Sequelize.col('DateGet')),
-        //                             ],
-        //                             group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
-        //                         })
-        //                         if (pricedb) {
-        //                             if (pricedb.Price != price) {
-        //                                 await mtblPrice(db).create({
-        //                                     IDLink: link[j].ID,
-        //                                     Price: Number(price),
-        //                                 })
-        //                             }
-        //                         }
-        //                         else {
-        //                             await mtblPrice(db).create({
-        //                                 IDLink: link[j].ID,
-        //                                 Price: Number(price),
-        //                             })
-        //                         }
-
-
-        //                     })
-        //                     .catch(err => console.log(err))
-        //             }
-        //             else if (link[j].EnumLoaiLink === 2) {
-        //                 let body = {
-        //                     url: link[j].LinkAddress,
-        //                 }
-        //                 await axios.post(`http://163.44.192.123:5000/get_prices_pa`, body)
-        //                     .then(async (res) => {
-        //                         var price;
-        //                         if (res.data.price != 0) {
-        //                             price = res.data.price.replace(/,/g, '')
-        //                         }
-        //                         else {
-        //                             price = 0
-        //                         }
-        //                         array[i]['pricePhucAnh'] = price;
-        //                         var pricedb = await mtblPrice(db).findOne({
-        //                             order: [
-        //                                 Sequelize.fn('max', Sequelize.col('DateGet')),
-        //                             ],
-        //                             group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
-        //                         })
-        //                         if (pricedb) {
-        //                             if (pricedb.Price != price) {
-        //                                 await mtblPrice(db).create({
-        //                                     IDLink: link[j].ID,
-        //                                     Price: Number(price),
-
-        //                                 })
-        //                             }
-        //                         } else {
-        //                             await mtblPrice(db).create({
-        //                                 IDLink: link[j].ID,
-        //                                 Price: Number(price),
-
-        //                             })
-        //                         }
-
-        //                     })
-        //                     .catch(err => console.log(err))
-        //             }
-        //             else if (link[j].EnumLoaiLink === 1) {
-        //                 let body = {
-        //                     url: link[j].LinkAddress,
-        //                 }
-        //                 await axios.post(`http://163.44.192.123:5000/get_prices_ap`, body)
-        //                     .then(async (res) => {
-        //                         var price;
-        //                         if (res.data.price != 0) {
-        //                             price = res.data.price.replace(/,/g, '')
-        //                         }
-        //                         else {
-        //                             price = 0
-        //                         }
-        //                         array[i]['priceAnPhat'] = price;
-        //                         var pricedb = await mtblPrice(db).findOne({
-        //                             order: [
-        //                                 Sequelize.fn('max', Sequelize.col('DateGet')),
-        //                             ],
-        //                             group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
-        //                         })
-        //                         if (pricedb) {
-        //                             if (pricedb.Price != price) {
-        //                                 await mtblPrice(db).create({
-        //                                     IDLink: link[j].ID,
-        //                                     Price: Number(price),
-        //                                 })
-        //                             }
-        //                         } else {
-        //                             await mtblPrice(db).create({
-        //                                 IDLink: link[j].ID,
-        //                                 Price: Number(price),
-        //                             })
-        //                         }
-        //                     })
-        //                     .catch(err => console.log(err))
-        //             }
-        //             else if (link[j].EnumLoaiLink === 0) {
-        //                 let body = {
-        //                     url: link[j].LinkAddress,
-        //                 }
-
-        //                 await axios.post(`http://163.44.192.123:5000/get_prices_pv`, body)
-        //                     .then(async (res) => {
-        //                         var price;
-        //                         if (res.data.price != 0) {
-        //                             price = res.data.price.replace(/,/g, '')
-        //                         }
-        //                         else {
-        //                             price = 0
-        //                         }
-        //                         array[i]['pricePhongVu'] = price;
-        //                         var pricedb = await mtblPrice(db).findOne({
-        //                             order: [
-        //                                 Sequelize.fn('max', Sequelize.col('DateGet')),
-        //                             ],
-        //                             group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
-        //                         })
-        //                         if (pricedb) {
-        //                             if (pricedb.Price != price) {
-        //                                 await mtblPrice(db).create({
-        //                                     IDLink: link[j].ID,
-        //                                     Price: Number(price),
-        //                                 })
-        //                             }
-        //                         }
-        //                         else {
-        //                             await mtblPrice(db).create({
-        //                                 IDLink: link[j].ID,
-        //                                 Price: Number(price),
-        //                             })
-        //                         }
-
-        //                     })
-        //                     .catch(err => console.log(err))
-        //             }
-        //         }
-        //     }
-
-        // }
-        // var result = {
-        //     status: Constant.STATUS.SUCCESS,
-        //     message: '',
-        //     array: array,
-        // }
-        // res.json(result)
-        // })
     }
 
 }
