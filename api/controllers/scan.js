@@ -179,6 +179,15 @@ async function createPrice(objLink, db, objResult) {
     }
 }
 
+function convertStringToList(string) {
+    let result = [];
+    if (string) {
+        result = string.split(";")
+        console.log(result);
+    }
+    return result;
+}
+
 module.exports = {
     // search_goods
     functionSearchGoods: async (req, res) => {
@@ -206,41 +215,45 @@ module.exports = {
         database.connectDatabase().then(async db => {
             var whereSearchGroup = [];
             if (body.groupKey) {
-                var gr1 = await mtblHangHoaGroup1(db).findAll({
-                    where: {
-                        [Op.or]: [
-                            { TenNhomHang: { [Op.like]: '%' + body.groupKey + '%' } },
-                        ]
-                    }
-                })
+                var groupKey = [];
+                groupKey = convertStringToList(body.groupKey);
+                for (var i = 0; i < groupKey.length; i++) {
+                    var gr1 = await mtblHangHoaGroup1(db).findAll({
+                        where: {
+                            [Op.or]: [
+                                { TenNhomHang: { [Op.like]: '%' + groupKey[i].trim() + '%' } },
+                            ]
+                        }
+                    })
 
-                var gr2 = await mtblHangHoaGroup2(db).findAll({
-                    where: {
-                        [Op.or]: [
-                            { TenNhomHang: { [Op.like]: '%' + body.groupKey + '%' } },
-                        ]
-                    }
-                })
-                var gr3 = await mtblHangHoaGroup3(db).findAll({
-                    where: {
-                        [Op.or]: [
-                            { TenNhomHang: { [Op.like]: '%' + body.groupKey + '%' } },
-                        ]
-                    }
-                })
-                var idGroup = [];
-                gr1.forEach(item => {
-                    idGroup.push(item.ID);
-                })
-                gr2.forEach(item => {
-                    idGroup.push(item.ID);
-                })
-                gr3.forEach(item => {
-                    idGroup.push(item.ID);
-                })
-                whereSearchGroup.push({ IDGroup1: { [Op.in]: idGroup } },)
-                whereSearchGroup.push({ IDGroup2: { [Op.in]: idGroup } },)
-                whereSearchGroup.push({ IDGroup3: { [Op.in]: idGroup } },)
+                    var gr2 = await mtblHangHoaGroup2(db).findAll({
+                        where: {
+                            [Op.or]: [
+                                { TenNhomHang: { [Op.like]: '%' + groupKey[i].trim() + '%' } },
+                            ]
+                        }
+                    })
+                    var gr3 = await mtblHangHoaGroup3(db).findAll({
+                        where: {
+                            [Op.or]: [
+                                { TenNhomHang: { [Op.like]: '%' + groupKey[i].trim() + '%' } },
+                            ]
+                        }
+                    })
+                    var idGroup = [];
+                    gr1.forEach(item => {
+                        idGroup.push(item.ID);
+                    })
+                    gr2.forEach(item => {
+                        idGroup.push(item.ID);
+                    })
+                    gr3.forEach(item => {
+                        idGroup.push(item.ID);
+                    })
+                    whereSearchGroup.push({ IDGroup1: { [Op.in]: idGroup } },)
+                    whereSearchGroup.push({ IDGroup2: { [Op.in]: idGroup } },)
+                    whereSearchGroup.push({ IDGroup3: { [Op.in]: idGroup } },)
+                }
             } else {
                 whereSearchGroup.push({ Code: { [Op.like]: '%' + '' + '%' } },)
             }
@@ -320,6 +333,7 @@ module.exports = {
             var count3 = 0;
             var count4 = 0;
             var count0 = 0;
+            // push vào obj: obj gửi vào service cào giá
             for (var i = 0; i < data.length; i++) {
                 if (array[i].idHangHoa) {
                     var link = await mtblLinkGetPrice(db).findAll({
@@ -369,6 +383,7 @@ module.exports = {
                 }
             }
             var goods = []
+            // check fontend chọn option gì
             if (columnScan.indexOf(4) != -1)
                 await getPriceFromService(4, group4, goods)
             if (columnScan.indexOf(3) != -1)
@@ -379,6 +394,7 @@ module.exports = {
                 await getPriceFromService(1, group1, goods)
             if (columnScan.indexOf(0) != -1)
                 await getPriceFromService(0, group0, goods)
+            // push giá vào list gửi về FE
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
                 array[i]['priceGearVN'] = 0;
@@ -417,6 +433,7 @@ module.exports = {
                 array: array,
             }
             res.json(result);
+            // creare price
             for (var i = 0; i < array.length; i++) {
                 var links = await mtblLinkGetPrice(db).findAll({
                     where: { IDHangHoa: array[i].idHangHoa }
