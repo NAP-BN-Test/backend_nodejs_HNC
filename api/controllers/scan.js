@@ -14,6 +14,7 @@ const bodyParser = require('body-parser');
 var mtblLinkGetPrice = require('../tables/tblLinkGetPrice');
 const Sequelize = require('sequelize');
 const axios = require('axios');
+var sql = require("mssql");
 function filterArray(value, array) {
     var check = false;
     if (array.length > 0) {
@@ -130,7 +131,6 @@ async function createPrice(objLink, db, objResult) {
                     }
                 }
                 if (objLink[j].EnumLoaiLink === 1) {
-                    console.log(pricedb.Price, objResult.priceAnPhat);
                     if (pricedb.Price !== objResult.priceAnPhat) {
                         await mtblPrice(db).create({
                             IDLink: objLink[j].ID,
@@ -139,9 +139,6 @@ async function createPrice(objLink, db, objResult) {
                     }
                 }
                 if (objLink[j].EnumLoaiLink === 0) {
-                    console.log('pv');
-                    console.log('pv');
-                    console.log('pv');
                     if (pricedb.Price !== objResult.pricePhongVu) {
                         await mtblPrice(db).create({
                             IDLink: objLink[j].ID,
@@ -239,126 +236,313 @@ module.exports = {
     // search_goods
     functionSearchGoods: async (req, res) => {
         let body = req.body;
-        let where = {};
-        let whereSearch = [];
+        var config = {
+            user: 'sa',
+            password: '1234',
+            server: 'localhost',
+            database: 'HNC_DB',
+            options: {
+                encrypt: false,
+            },
+        };
+        var groupKey = [];
+        groupKey = convertStringToList(body.groupKey);
+        var whereGroup = '';
+        if (groupKey.length > 0)
+            for (var i = 0; i < groupKey.length; i++) {
+                if (i <= 0)
+                    whereGroup += `scan.tenNhomHang1 like N'%` + groupKey[i] + `%' or scan.tenNhomHang2 like N'%` + groupKey[i] + `%' or scan.tenNhomHang3 like N'%` + groupKey[i] + `%'`
+                else
+                    whereGroup += `or scan.tenNhomHang1 like N'%` + groupKey[i] + `%' or scan.tenNhomHang2 like N'%` + groupKey[i] + `%' or scan.tenNhomHang3 like N'%` + groupKey[i] + `%'`
+            }
+
+        var whereGoods = '';
         if (body.goodsKey) {
-            whereSearch = [
-                { NameHangHoa: { [Op.like]: '%' + body.goodsKey + '%' } },
-                { Code: { [Op.like]: '%' + body.goodsKey + '%' } },
-                { PART: { [Op.like]: '%' + body.goodsKey + '%' } },
-            ];
-        } else {
-            whereSearch = [
-                { NameHangHoa: { [Op.like]: '%' + '' + '%' } },
-            ];
+            whereGoods = `scan.nameGoods like N'%` + body.goodsKey + `%' or scan.part like N'%` + body.goodsKey + `%' or scan.Code like N'%` + body.goodsKey + `%'`
         }
-        var itemPerPage = 100000000;
+        var where = `WHERE ` + whereGroup + whereGoods
         var page = 1;
-        if (body.itemPerPage) {
-            itemPerPage = Number(body.itemPerPage);
-            if (body.page)
-                page = Number(body.page);
-        }
-        database.connectDatabase().then(async db => {
-            var whereSearchGroup = [];
-            if (body.groupKey) {
-                var groupKey = [];
-                groupKey = convertStringToList(body.groupKey);
-                for (var i = 0; i < groupKey.length; i++) {
-                    var gr1 = await mtblHangHoaGroup1(db).findAll({
-                        where: {
-                            [Op.or]: [
-                                { TenNhomHang: { [Op.like]: '%' + groupKey[i].trim() + '%' } },
-                            ]
-                        }
-                    })
+        if (body.page)
+            page = Number(body.page);
+        var offset = 20 * (page - 1);
+        var fQuery = '';
+        if (whereGoods !== '' || whereGroup !== '')
+            fQuery = where + `GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
+        ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
+        else if (whereGoods === '' || whereGroup === '')
+            fQuery = `GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
+            ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
+        console.log(fQuery);
+        sql.connect(config, async function (err) {
+            var request = new sql.Request();
 
-                    var gr2 = await mtblHangHoaGroup2(db).findAll({
-                        where: {
-                            [Op.or]: [
-                                { TenNhomHang: { [Op.like]: '%' + groupKey[i].trim() + '%' } },
-                            ]
-                        }
-                    })
-                    var gr3 = await mtblHangHoaGroup3(db).findAll({
-                        where: {
-                            [Op.or]: [
-                                { TenNhomHang: { [Op.like]: '%' + groupKey[i].trim() + '%' } },
-                            ]
-                        }
-                    })
-                    var idGroup = [];
-                    gr1.forEach(item => {
-                        idGroup.push(item.ID);
-                    })
-                    gr2.forEach(item => {
-                        idGroup.push(item.ID);
-                    })
-                    gr3.forEach(item => {
-                        idGroup.push(item.ID);
-                    })
-                    whereSearchGroup.push({ IDGroup1: { [Op.in]: idGroup } },)
-                    whereSearchGroup.push({ IDGroup2: { [Op.in]: idGroup } },)
-                    whereSearchGroup.push({ IDGroup3: { [Op.in]: idGroup } },)
+            var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods, 
+            SUM(priceHNC) priceHNC, SUM(priceGearVN) priceGearVN, SUM(pricePhucAnh) pricePhucAnh, SUM(priceAnPhat) priceAnPhat, SUM(pricePhongVu) pricePhongVu FROM (
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code ,
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as priceHNC,
+            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 4
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 3
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            0 as priceGearVN, 
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links       
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 2
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            0 as priceGearVN, 0 as pricePhucAnh,
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 1
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 0
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            ) as scan               
+            `
+            var queryAll = `SELECT scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods, 
+            SUM(priceHNC) priceHNC, SUM(priceGearVN) priceGearVN, SUM(pricePhucAnh) pricePhucAnh, SUM(priceAnPhat) priceAnPhat, SUM(pricePhongVu) pricePhongVu FROM (
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code ,
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as priceHNC,
+            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 4
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 3
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            0 as priceGearVN, 
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links       
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 2
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            0 as priceGearVN, 0 as pricePhucAnh,
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as priceAnPhat, 0 pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 1
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            
+            UNION ALL
+            
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 
+            CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END as pricePhongVu
+            FROM tblHangHoaGroup1 as g1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.IDGroup2 = g2.ID
+            LEFT JOIN tblHangHoa as goods
+            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID
+            WHERE links.EnumLoaiLink = 0
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.Code
+            ) as scan
+            GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`
+            // query to the database and get the records
+            var count;
+            await request.query(queryAll, function (err, recordset) {
+                if (err) console.log(err)
+                count = recordset.rowsAffected[0];
+            });
+            request.query(query + fQuery, function (err, recordset) {
+                var result = {
+                    status: Constant.STATUS.SUCCESS,
+                    message: '',
+                    array: recordset.recordsets[0],
+                    all: count,
                 }
-            } else {
-                whereSearchGroup.push({ Code: { [Op.like]: '%' + '' + '%' } },)
-            }
-            where = {
-                [Op.or]: whereSearch,
-                [Op.and]: {
-                    [Op.or]: whereSearchGroup
-                },
-            }
-            var array = [];
-            var count = await mHangHoa(db).count({ where: where })
-            await mHangHoa(db).findAll({
-                where: where,
-                include: [
-                    {
-                        model: mtblHangHoaGroup1(db)
-                    },
-                    {
-                        model: mtblHangHoaGroup2(db)
-                    },
-                    {
-                        model: mtblHangHoaGroup3(db)
-                    },
-                    {
-                        model: mtblLinkGetPrice(db)
-                    }
-                ],
-                // order: [['ID', 'DESC']],
-                // offset: itemPerPage * (page - 1),
-                // limit: itemPerPage
-            }).then(async data => {
-                for (var i = 0; i < data.length; i++) {
-                    var obj = {
-                        stt: Number(i) + 1,
-                        idGroup1: data[i].tblHangHoaGroup1 ? data[i].IDGroup1 : '',
-                        tenNhomHang1: data[i].tblHangHoaGroup1 ? data[i].tblHangHoaGroup1.TenNhomHang : '',
-                        idGroup2: data[i].tblHangHoaGroup2 ? data[i].IDGroup2 : '',
-                        tenNhomHang2: data[i].tblHangHoaGroup2 ? data[i].tblHangHoaGroup2.TenNhomHang : '',
-                        idGroup3: data[i].tblHangHoaGroup3 ? data[i].IDGroup3 : '',
-                        tenNhomHang3: data[i].tblHangHoaGroup3 ? data[i].tblHangHoaGroup3.TenNhomHang : '',
-                        part: data[i].PART,
-                        nameGoods: data[i].NameHangHoa,
-                        idHangHoa: data[i].ID,
-                        code: data[i].Code
-                    }
-                    obj = await getPriceFromDatabase(obj, db);
-                    array.push(obj)
-                }
+                res.json(result)
             })
-            var result = {
-                status: Constant.STATUS.SUCCESS,
-                message: '',
-                array: array,
-                all: count,
-            }
-            res.json(result)
-
         })
+
     },
     // scan_price
     functionScanPrice: async (req, res) => {
@@ -389,70 +573,36 @@ module.exports = {
                     })
                     for (var j = 0; j < link.length; j++) {
                         if (link[j].EnumLoaiLink === 4) {
-                            if (count4 == 20) {
-                                if (columnScan.indexOf(4) != -1)
-                                    await getPriceFromService(4, group4, goods);
-                                count4 = 0;
-                                group4 = {};
-                            }
                             group4[count4] = {
-                                code: data[i].code,
+                                code: data[i].Code,
                                 url: link[j].LinkAddress
                             }
                             count4 += 1;
                         }
                         if (link[j].EnumLoaiLink === 3) {
-                            if (count3 == 20) {
-                                if (columnScan.indexOf(3) != -1)
-                                    await getPriceFromService(3, group3, goods);
-                                count3 = 0;
-                                group3 = {};
-
-                            }
                             group3[count3] = {
-                                code: data[i].code,
+                                code: data[i].Code,
                                 url: link[j].LinkAddress
                             }
                             count3 += 1
                         }
                         if (link[j].EnumLoaiLink === 2) {
-                            if (count2 == 20) {
-                                if (columnScan.indexOf(2) != -1)
-                                    await getPriceFromService(2, group2, goods);
-                                count2 = 0;
-                                group2 = {};
-
-                            }
                             group2[count2] = {
-                                code: data[i].code,
+                                code: data[i].Code,
                                 url: link[j].LinkAddress
                             }
                             count2 += 1;
                         }
                         if (link[j].EnumLoaiLink === 1) {
-                            if (count1 == 20) {
-                                if (columnScan.indexOf(1) != -1)
-                                    await getPriceFromService(1, group1, goods);
-                                count1 = 0;
-                                group1 = {};
-
-                            }
                             group1[count1] = {
-                                code: data[i].code,
+                                code: data[i].Code,
                                 url: link[j].LinkAddress
                             }
                             count1 += 1;
                         }
                         if (link[j].EnumLoaiLink === 0) {
-                            if (count0 == 20) {
-                                if (columnScan.indexOf(0) != -1)
-                                    await getPriceFromService(0, group0, goods);
-                                count0 = 0;
-                                group0 = {};
-
-                            }
                             group0[count0] = {
-                                code: data[i].code,
+                                code: data[i].Code,
                                 url: link[j].LinkAddress
                             }
                             count0 += 1;
@@ -470,7 +620,6 @@ module.exports = {
                 await getPriceFromService(1, group1, goods)
             if (columnScan.indexOf(0) != -1)
                 await getPriceFromService(0, group0, goods)
-
             // push giá vào list gửi về FE
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
@@ -480,25 +629,25 @@ module.exports = {
                 array[i]['pricePhongVu'] = 0;
                 for (var j = 0; j < goods.length; j++) {
                     if (goods[j].key == 4) {
-                        if (data[i].code == goods[j].code)
+                        if (data[i].code == goods[j].Code)
                             array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
                     }
                     if (goods[j].key == 3) {
-                        if (data[i].code == goods[j].code)
+                        if (data[i].code == goods[j].Code)
                             array[i]['priceGearVN'] = converPriceToNumber(goods[j].price);
                     }
                     if (goods[j].key == 2) {
-                        if (data[i].code == goods[j].code)
+                        if (data[i].code == goods[j].Code)
                             array[i]['pricePhucAnh'] = converPriceToNumber(goods[j].price);
 
                     }
                     if (goods[j].key == 1) {
-                        if (data[i].code == goods[j].code)
+                        if (data[i].code == goods[j].Code)
                             array[i]['priceAnPhat'] = converPriceToNumber(goods[j].price);
 
                     }
                     if (goods[j].key == 0) {
-                        if (data[i].code == goods[j].code)
+                        if (data[i].code == goods[j].Code)
                             array[i]['pricePhongVu'] = converPriceToNumber(goods[j].price);
 
                     }
@@ -515,29 +664,8 @@ module.exports = {
                 var links = await mtblLinkGetPrice(db).findAll({
                     where: { IDHangHoa: array[i].idHangHoa }
                 })
-                createPrice(links, db, array[i]);
+                await createPrice(links, db, array[i]);
             }
         })
     }
-    /*
-    SELECT * FROM (
-SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
-g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as TenHang, links.LinkAddress as Link, prices.Price as Giá, max(prices.DateGet) as Ngay
-FROM tblHangHoaGroup1 as g1
-LEFT JOIN tblHangHoaGroup2 as g2
-ON g2.IDGroup1 = g1.ID
-LEFT JOIN tblHangHoaGroup3 as g3
-ON g3.IDGroup2 = g2.ID
-LEFT JOIN tblHangHoa as goods
-ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
-LEFT JOIN tblLinkGetPrice as links
-ON links.IDHangHoa = goods.ID
-LEFT JOIN tblPrice as prices
-ON prices.IDLink = links.ID
-GROUP BY links.LinkAddress, g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, links.LinkAddress, prices.Price) as Scan
-ORDER BY idGroup1
-OFFSET 0 ROWS
-FETCH NEXT 20 ROWS ONLY;
-
-     */
 }
