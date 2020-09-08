@@ -40,7 +40,7 @@ async function checkIn(array, value) {
 }
 
 async function checkGroup(db, idGroup1, idGroup2, idGroup3) {
-    if (!idGroup1 && !idGroup2 && !idGroup3) return true
+    if (!idGroup1 && !idGroup2 && !idGroup3) return false
     if (!idGroup1) return false
     else if (idGroup2) {
         let check1 = await mtblHangHoaGroup2(db).findAll({ where: { IDGroup1: idGroup1 } })
@@ -161,7 +161,7 @@ module.exports = {
     // update_goods : cập nhật hàng hóa
     updateGoods: (req, res) => {
         let body = req.body;
-
+        console.log(body);
         database.connectDatabase().then(async db => {
             try {
                 let listUpdate = [];

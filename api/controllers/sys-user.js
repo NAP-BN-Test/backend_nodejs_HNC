@@ -187,7 +187,7 @@ module.exports = {
             for (let field of listUpdate) {
                 update[field.key] = field.value
             }
-            mSysUser(db).update(update, { where: { ID: body.id } }).then(data => {
+            await mSysUser(db).update(update, { where: { ID: body.id } }).then(data => {
                 res.json(Result.ACTION_SUCCESS)
             }).catch(err => {
                 res.json(Result.SYS_ERROR_RESULT);

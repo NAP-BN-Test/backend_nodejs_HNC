@@ -99,14 +99,14 @@ async function createPrice(objLink, db, objResult) {
         for (var j = 0; j < objLink.length; j++) {
             var pricedb = await mtblPrice(db).findOne({
                 order: [
-                    Sequelize.fn('max', Sequelize.col('DateGet')),
+                    Sequelize.literal('max(DateGet) DESC'),
                 ],
                 group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
                 where: { IDLink: objLink[j].ID }
             })
             if (pricedb) {
                 if (objLink[j].EnumLoaiLink === 4) {
-                    if (pricedb.Price != objResult.priceHNC) {
+                    if (pricedb.Price !== objResult.priceHNC) {
                         await mtblPrice(db).create({
                             IDLink: objLink[j].ID,
                             Price: objResult.priceHNC ? objResult.priceHNC : 0,
@@ -114,7 +114,7 @@ async function createPrice(objLink, db, objResult) {
                     }
                 }
                 if (objLink[j].EnumLoaiLink === 3) {
-                    if (pricedb.Price != objResult.priceGearVN) {
+                    if (pricedb.Price !== objResult.priceGearVN) {
                         await mtblPrice(db).create({
                             IDLink: objLink[j].ID,
                             Price: objResult.priceGearVN ? objResult.priceGearVN : 0,
@@ -122,7 +122,7 @@ async function createPrice(objLink, db, objResult) {
                     }
                 }
                 if (objLink[j].EnumLoaiLink === 2) {
-                    if (pricedb.Price != objResult.pricePhucAnh) {
+                    if (pricedb.Price !== objResult.pricePhucAnh) {
                         await mtblPrice(db).create({
                             IDLink: objLink[j].ID,
                             Price: objResult.pricePhucAnh ? objResult.pricePhucAnh : 0,
@@ -130,7 +130,8 @@ async function createPrice(objLink, db, objResult) {
                     }
                 }
                 if (objLink[j].EnumLoaiLink === 1) {
-                    if (pricedb.Price != objResult.priceAnPhat) {
+                    console.log(pricedb.Price, objResult.priceAnPhat);
+                    if (pricedb.Price !== objResult.priceAnPhat) {
                         await mtblPrice(db).create({
                             IDLink: objLink[j].ID,
                             Price: objResult.priceAnPhat ? objResult.priceAnPhat : 0,
@@ -138,7 +139,10 @@ async function createPrice(objLink, db, objResult) {
                     }
                 }
                 if (objLink[j].EnumLoaiLink === 0) {
-                    if (pricedb.Price != objResult.pricePhongVu) {
+                    console.log('pv');
+                    console.log('pv');
+                    console.log('pv');
+                    if (pricedb.Price !== objResult.pricePhongVu) {
                         await mtblPrice(db).create({
                             IDLink: objLink[j].ID,
                             Price: objResult.pricePhongVu ? objResult.pricePhongVu : 0,
@@ -202,28 +206,29 @@ async function getPriceFromDatabase(obj, db) {
         where: { IDHangHoa: obj.idHangHoa }
     })
     for (var j = 0; j < links.length; j++) {
-        var pricedb = await mtblPrice(db).findOne({
+        var pricedb = await mtblPrice(db).findAll({
             order: [
-                Sequelize.fn('max', Sequelize.col('DateGet')),
+                Sequelize.literal('max(DateGet) DESC'),
             ],
             group: ['IDLink', 'Price', 'ID', 'IDUserGet', 'DateGet'],
-            where: { IDLink: links[j].ID }
+            where: { IDLink: links[j].ID },
+            limit: 1,
         })
-        if (pricedb) {
+        if (pricedb.length > 0) {
             if (links[j].EnumLoaiLink === 4) {
-                obj['priceHNC'] = pricedb.Price ? pricedb.Price : 0;
+                obj['priceHNC'] = pricedb[0].Price ? pricedb[0].Price : 0;
             }
             if (links[j].EnumLoaiLink === 3) {
-                obj['priceGearVN'] = pricedb.Price ? pricedb.Price : 0;
+                obj['priceGearVN'] = pricedb[0].Price ? pricedb[0].Price : 0;
             }
             if (links[j].EnumLoaiLink === 2) {
-                obj['pricePhucAnh'] = pricedb.Price ? pricedb.Price : 0;
+                obj['pricePhucAnh'] = pricedb[0].Price ? pricedb[0].Price : 0;
             }
             if (links[j].EnumLoaiLink === 1) {
-                obj['priceAnPhat'] = pricedb.Price ? pricedb.Price : 0;
+                obj['priceAnPhat'] = pricedb[0].Price ? pricedb[0].Price : 0;
             }
             if (links[j].EnumLoaiLink === 0) {
-                obj['pricePhongVu'] = pricedb.Price ? pricedb.Price : 0;
+                obj['pricePhongVu'] = pricedb[0].Price ? pricedb[0].Price : 0;
             }
         }
     }
@@ -235,7 +240,6 @@ module.exports = {
     functionSearchGoods: async (req, res) => {
         let body = req.body;
         let where = {};
-        console.log(body);
         let whereSearch = [];
         if (body.goodsKey) {
             whereSearch = [
@@ -324,9 +328,9 @@ module.exports = {
                         model: mtblLinkGetPrice(db)
                     }
                 ],
-                order: [['ID', 'DESC']],
-                offset: itemPerPage * (page - 1),
-                limit: itemPerPage
+                // order: [['ID', 'DESC']],
+                // offset: itemPerPage * (page - 1),
+                // limit: itemPerPage
             }).then(async data => {
                 for (var i = 0; i < data.length; i++) {
                     var obj = {
@@ -456,11 +460,6 @@ module.exports = {
                     }
                 }
             }
-            console.log('group4', count4);
-            console.log('group3', count3);
-            console.log('group2', count2);
-            console.log('group1', count1);
-            console.log('group0', count0);
             if (columnScan.indexOf(4) != -1)
                 await getPriceFromService(4, group4, goods)
             if (columnScan.indexOf(3) != -1)
@@ -516,9 +515,29 @@ module.exports = {
                 var links = await mtblLinkGetPrice(db).findAll({
                     where: { IDHangHoa: array[i].idHangHoa }
                 })
-                await createPrice(links, db, array[i]);
+                createPrice(links, db, array[i]);
             }
         })
     }
+    /*
+    SELECT * FROM (
+SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as TenHang, links.LinkAddress as Link, prices.Price as Giá, max(prices.DateGet) as Ngay
+FROM tblHangHoaGroup1 as g1
+LEFT JOIN tblHangHoaGroup2 as g2
+ON g2.IDGroup1 = g1.ID
+LEFT JOIN tblHangHoaGroup3 as g3
+ON g3.IDGroup2 = g2.ID
+LEFT JOIN tblHangHoa as goods
+ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+LEFT JOIN tblLinkGetPrice as links
+ON links.IDHangHoa = goods.ID
+LEFT JOIN tblPrice as prices
+ON prices.IDLink = links.ID
+GROUP BY links.LinkAddress, g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, links.LinkAddress, prices.Price) as Scan
+ORDER BY idGroup1
+OFFSET 0 ROWS
+FETCH NEXT 20 ROWS ONLY;
 
+     */
 }
