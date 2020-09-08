@@ -62,6 +62,8 @@ function pushDataToArray(data, array) {
 
 async function getPriceFromService(key, obj, array) {
     if (obj['0']) {
+        console.log(obj);
+        console.log(array);
         if (key == 4)
             await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, obj).then(data => {
                 if (data.data.result)
@@ -251,26 +253,34 @@ module.exports = {
         if (groupKey.length > 0)
             for (var i = 0; i < groupKey.length; i++) {
                 if (i <= 0)
-                    whereGroup += `scan.tenNhomHang1 like N'%` + groupKey[i] + `%' or scan.tenNhomHang2 like N'%` + groupKey[i] + `%' or scan.tenNhomHang3 like N'%` + groupKey[i] + `%'`
+                    whereGroup += `UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase() + `%'`
                 else
-                    whereGroup += `or scan.tenNhomHang1 like N'%` + groupKey[i] + `%' or scan.tenNhomHang2 like N'%` + groupKey[i] + `%' or scan.tenNhomHang3 like N'%` + groupKey[i] + `%'`
+                    whereGroup += `or UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase() + `%'`
             }
 
         var whereGoods = '';
         if (body.goodsKey) {
-            whereGoods = `scan.nameGoods like N'%` + body.goodsKey + `%' or scan.part like N'%` + body.goodsKey + `%' or scan.Code like N'%` + body.goodsKey + `%'`
+            if (whereGroup !== '') {
+                whereGoods = ` AND (UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.Code) like N'%` + body.goodsKey.toUpperCase() + `%')`
+
+            }
+            else {
+                whereGoods = `(UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.Code) like N'%` + body.goodsKey.toUpperCase() + `%')`
+
+            }
         }
         var where = `WHERE ` + whereGroup + whereGoods
         var page = 1;
         if (body.page)
             page = Number(body.page);
-        var offset = 20 * (page - 1);
+        var offset = 10 * (page - 1);
         var fQuery = '';
+
         if (whereGoods !== '' || whereGroup !== '')
-            fQuery = where + `GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
+            fQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
         ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
         else if (whereGoods === '' || whereGroup === '')
-            fQuery = `GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
+            fQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
             ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
         console.log(fQuery);
         sql.connect(config, async function (err) {
@@ -401,146 +411,21 @@ module.exports = {
             prices.Price, goods.PART, goods.ID, goods.Code
             ) as scan               
             `
-            var queryAll = `SELECT scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods, 
-            SUM(priceHNC) priceHNC, SUM(priceGearVN) priceGearVN, SUM(pricePhucAnh) pricePhucAnh, SUM(priceAnPhat) priceAnPhat, SUM(pricePhongVu) pricePhongVu FROM (
-            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
-            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code ,
-            CASE
-                WHEN prices.Price is NULL THEN 0
-                ELSE prices.Price
-            END as priceHNC,
-            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
-            LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
-            LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
-            LEFT JOIN tblLinkGetPrice as links
-            ON links.IDHangHoa = goods.ID
-            LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
-            WHERE links.EnumLoaiLink = 4
-            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
-            
-            UNION ALL
-            
-            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
-            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
-            CASE
-                WHEN prices.Price is NULL THEN 0
-                ELSE prices.Price
-            END as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
-            LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
-            LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
-            LEFT JOIN tblLinkGetPrice as links
-            ON links.IDHangHoa = goods.ID
-            LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
-            WHERE links.EnumLoaiLink = 3
-            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
-            
-            UNION ALL
-            
-            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
-            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
-            0 as priceGearVN, 
-            CASE
-                WHEN prices.Price is NULL THEN 0
-                ELSE prices.Price
-            END as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
-            LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
-            LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
-            LEFT JOIN tblLinkGetPrice as links       
-            ON links.IDHangHoa = goods.ID
-            LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
-            WHERE links.EnumLoaiLink = 2
-            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
-            
-            UNION ALL
-            
-            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
-            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
-            0 as priceGearVN, 0 as pricePhucAnh,
-            CASE
-                WHEN prices.Price is NULL THEN 0
-                ELSE prices.Price
-            END as priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
-            LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
-            LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
-            LEFT JOIN tblLinkGetPrice as links
-            ON links.IDHangHoa = goods.ID
-            LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
-            WHERE links.EnumLoaiLink = 1
-            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
-            
-            UNION ALL
-            
-            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
-            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
-            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 
-            CASE
-                WHEN prices.Price is NULL THEN 0
-                ELSE prices.Price
-            END as pricePhongVu
-            FROM tblHangHoaGroup1 as g1
-            LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
-            LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
-            LEFT JOIN tblLinkGetPrice as links
-            ON links.IDHangHoa = goods.ID
-            LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
-            WHERE links.EnumLoaiLink = 0
-            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
-            ) as scan
-            GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`
             // query to the database and get the records
             var count;
-            await request.query(queryAll, function (err, recordset) {
+            await request.query(query + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`, function (err, recordset) {
                 if (err) console.log(err)
                 count = recordset.rowsAffected[0];
+                request.query(query + fQuery, function (err, recordset) {
+                    var result = {
+                        status: Constant.STATUS.SUCCESS,
+                        message: '',
+                        array: recordset.recordsets[0],
+                        all: count,
+                    }
+                    res.json(result)
+                })
             });
-            request.query(query + fQuery, function (err, recordset) {
-                var result = {
-                    status: Constant.STATUS.SUCCESS,
-                    message: '',
-                    array: recordset.recordsets[0],
-                    all: count,
-                }
-                res.json(result)
-            })
         })
 
     },
@@ -621,6 +506,7 @@ module.exports = {
             if (columnScan.indexOf(0) != -1)
                 await getPriceFromService(0, group0, goods)
             // push giá vào list gửi về FE
+            console.log(goods);
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
                 array[i]['priceGearVN'] = 0;
@@ -628,27 +514,23 @@ module.exports = {
                 array[i]['priceAnPhat'] = 0;
                 array[i]['pricePhongVu'] = 0;
                 for (var j = 0; j < goods.length; j++) {
-                    if (goods[j].key == 4) {
-                        if (data[i].code == goods[j].Code)
-                            array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
+                    console.log(goods[j]);
+                    if (goods[j].key == 4 && data[i].Code == goods[j].code) {
+                        array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
                     }
-                    if (goods[j].key == 3) {
-                        if (data[i].code == goods[j].Code)
-                            array[i]['priceGearVN'] = converPriceToNumber(goods[j].price);
+                    if (goods[j].key == 3 && data[i].Code == goods[j].code) {
+                        array[i]['priceGearVN'] = converPriceToNumber(goods[j].price);
                     }
-                    if (goods[j].key == 2) {
-                        if (data[i].code == goods[j].Code)
-                            array[i]['pricePhucAnh'] = converPriceToNumber(goods[j].price);
+                    if (goods[j].key == 2 && data[i].Code == goods[j].code) {
+                        array[i]['pricePhucAnh'] = converPriceToNumber(goods[j].price);
 
                     }
-                    if (goods[j].key == 1) {
-                        if (data[i].code == goods[j].Code)
-                            array[i]['priceAnPhat'] = converPriceToNumber(goods[j].price);
+                    if (goods[j].key == 1 && data[i].Code == goods[j].code) {
+                        array[i]['priceAnPhat'] = converPriceToNumber(goods[j].price);
 
                     }
-                    if (goods[j].key == 0) {
-                        if (data[i].code == goods[j].Code)
-                            array[i]['pricePhongVu'] = converPriceToNumber(goods[j].price);
+                    if (goods[j].key == 0 && data[i].Code == goods[j].code) {
+                        array[i]['pricePhongVu'] = converPriceToNumber(goods[j].price);
 
                     }
                 }
