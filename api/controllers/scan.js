@@ -275,14 +275,16 @@ module.exports = {
             page = Number(body.page);
         var offset = 10 * (page - 1);
         var fQuery = '';
-
-        if (whereGoods !== '' || whereGroup !== '')
+        var pageQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`;
+        if (whereGoods !== '' || whereGroup !== '') {
             fQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
-        ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
-        else if (whereGoods === '' || whereGroup === '')
+            ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
+            pageQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`
+        }
+        else if (whereGoods === '' || whereGroup === '') {
             fQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
             ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
-        console.log(fQuery);
+        }
         sql.connect(config, async function (err) {
             var request = new sql.Request();
 
@@ -413,18 +415,31 @@ module.exports = {
             `
             // query to the database and get the records
             var count;
-            await request.query(query + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`, function (err, recordset) {
+            await request.query(query + pageQuery, function (err, recordset) {
                 if (err) console.log(err)
                 count = recordset.rowsAffected[0];
-                request.query(query + fQuery, function (err, recordset) {
-                    var result = {
-                        status: Constant.STATUS.SUCCESS,
-                        message: '',
-                        array: recordset.recordsets[0],
-                        all: count,
-                    }
-                    res.json(result)
-                })
+                if (body.page) {
+                    request.query(query + fQuery, function (err, recordset) {
+                        var result = {
+                            status: Constant.STATUS.SUCCESS,
+                            message: '',
+                            array: recordset.recordsets[0],
+                            all: count,
+                        }
+                        res.json(result)
+                    })
+                }
+                else {
+                    request.query(query + pageQuery, function (err, recordset) {
+                        var result = {
+                            status: Constant.STATUS.SUCCESS,
+                            message: '',
+                            array: recordset.recordsets[0],
+                            all: count,
+                        }
+                        res.json(result)
+                    })
+                }
             });
         })
 
@@ -433,6 +448,7 @@ module.exports = {
     functionScanPrice: async (req, res) => {
         let body = req.body;
         var data = JSON.parse(body.data);
+        console.log(data.length);
         var columnScan = JSON.parse(body.columnScan);
         var arrayScan = [0, 1, 2, 3, 4]
         if (columnScan.length < 1)
@@ -506,7 +522,6 @@ module.exports = {
             if (columnScan.indexOf(0) != -1)
                 await getPriceFromService(0, group0, goods)
             // push giá vào list gửi về FE
-            console.log(goods);
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
                 array[i]['priceGearVN'] = 0;
@@ -514,7 +529,6 @@ module.exports = {
                 array[i]['priceAnPhat'] = 0;
                 array[i]['pricePhongVu'] = 0;
                 for (var j = 0; j < goods.length; j++) {
-                    console.log(goods[j]);
                     if (goods[j].key == 4 && data[i].Code == goods[j].code) {
                         array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
                     }
