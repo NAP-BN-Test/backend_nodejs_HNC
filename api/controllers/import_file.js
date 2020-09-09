@@ -69,11 +69,9 @@ async function checkGroup3ExitsGroup2(db, idGroup2, idGroup3, nameGroup3) {
     if (check.ID === idGroup3) return true
     else return false
 }
-async function deleteAndCreate(db, idHangHoa, linkPrice, key) {
+async function deleteAndCreateLink(db, idHangHoa, linkPrice, key) {
     if (key === 4) {
-        await mtblLinkGetPrice(db).update({
-            LinkAddress: linkPrice,
-        }, {
+        var link = await mtblLinkGetPrice(db).findAll({
             where: {
                 [Op.and]: [
                     { IDHangHoa: idHangHoa },
@@ -81,11 +79,27 @@ async function deleteAndCreate(db, idHangHoa, linkPrice, key) {
                 ]
             }
         })
+        if (link.length > 0) {
+            await mtblLinkGetPrice(db).update({
+                LinkAddress: linkPrice,
+            }, {
+                where: {
+                    [Op.and]: [
+                        { IDHangHoa: idHangHoa },
+                        { EnumLoaiLink: 4 }
+                    ]
+                }
+            })
+            return
+        }
+        await mtblLinkGetPrice(db).create({
+            IDHangHoa: idHangHoa,
+            EnumLoaiLink: 4,
+            LinkAddress: linkPrice,
+        })
 
     } else if (key === 3) {
-        await mtblLinkGetPrice(db).update({
-            LinkAddress: linkPrice,
-        }, {
+        var link = await mtblLinkGetPrice(db).findAll({
             where: {
                 [Op.and]: [
                     { IDHangHoa: idHangHoa },
@@ -93,10 +107,26 @@ async function deleteAndCreate(db, idHangHoa, linkPrice, key) {
                 ]
             }
         })
-    } else if (key === 0) {
-        await mtblLinkGetPrice(db).update({
+        if (link.length > 0) {
+            await mtblLinkGetPrice(db).update({
+                LinkAddress: linkPrice,
+            }, {
+                where: {
+                    [Op.and]: [
+                        { IDHangHoa: idHangHoa },
+                        { EnumLoaiLink: 3 }
+                    ]
+                }
+            })
+            return
+        }
+        await mtblLinkGetPrice(db).create({
+            IDHangHoa: idHangHoa,
+            EnumLoaiLink: 3,
             LinkAddress: linkPrice,
-        }, {
+        })
+    } else if (key === 0) {
+        var link = await mtblLinkGetPrice(db).findAll({
             where: {
                 [Op.and]: [
                     { IDHangHoa: idHangHoa },
@@ -104,10 +134,26 @@ async function deleteAndCreate(db, idHangHoa, linkPrice, key) {
                 ]
             }
         })
-    } else if (key === 2) {
-        await mtblLinkGetPrice(db).update({
+        if (link.length > 0) {
+            await mtblLinkGetPrice(db).update({
+                LinkAddress: linkPrice,
+            }, {
+                where: {
+                    [Op.and]: [
+                        { IDHangHoa: idHangHoa },
+                        { EnumLoaiLink: 0 }
+                    ]
+                }
+            })
+            return
+        }
+        await mtblLinkGetPrice(db).create({
+            IDHangHoa: idHangHoa,
+            EnumLoaiLink: 0,
             LinkAddress: linkPrice,
-        }, {
+        })
+    } else if (key === 2) {
+        var link = await mtblLinkGetPrice(db).findAll({
             where: {
                 [Op.and]: [
                     { IDHangHoa: idHangHoa },
@@ -115,16 +161,50 @@ async function deleteAndCreate(db, idHangHoa, linkPrice, key) {
                 ]
             }
         })
-    } else if (key === 1) {
-        await mtblLinkGetPrice(db).update({
+        if (link.length > 0) {
+            await mtblLinkGetPrice(db).update({
+                LinkAddress: linkPrice,
+            }, {
+                where: {
+                    [Op.and]: [
+                        { IDHangHoa: idHangHoa },
+                        { EnumLoaiLink: 2 }
+                    ]
+                }
+            })
+            return
+        }
+        await mtblLinkGetPrice(db).create({
+            IDHangHoa: idHangHoa,
+            EnumLoaiLink: 2,
             LinkAddress: linkPrice,
-        }, {
+        })
+    } else if (key === 1) {
+        var link = await mtblLinkGetPrice(db).findAll({
             where: {
                 [Op.and]: [
                     { IDHangHoa: idHangHoa },
                     { EnumLoaiLink: 1 }
                 ]
             }
+        })
+        if (link.length > 0) {
+            await mtblLinkGetPrice(db).update({
+                LinkAddress: linkPrice,
+            }, {
+                where: {
+                    [Op.and]: [
+                        { IDHangHoa: idHangHoa },
+                        { EnumLoaiLink: 1 }
+                    ]
+                }
+            })
+            return
+        }
+        await mtblLinkGetPrice(db).create({
+            IDHangHoa: idHangHoa,
+            EnumLoaiLink: 1,
+            LinkAddress: linkPrice,
         })
     }
 }
@@ -225,19 +305,19 @@ module.exports = {
                         idHangHoa = hanghoa.ID
                     }
                     if (data[i]['Link HNC']) {
-                        await deleteAndCreate(db, idHangHoa, data[i]['Link HNC'], 4)
+                        await deleteAndCreateLink(db, idHangHoa, data[i]['Link HNC'], 4)
                     }
                     if (data[i]['Link An Phát']) {
-                        await deleteAndCreate(db, idHangHoa, data[i]['Link An Phát'], 1)
+                        await deleteAndCreateLink(db, idHangHoa, data[i]['Link An Phát'], 1)
                     }
                     if (data[i]['Link Phúc Anh']) {
-                        await deleteAndCreate(db, idHangHoa, data[i]['Link Phúc Anh'], 2)
+                        await deleteAndCreateLink(db, idHangHoa, data[i]['Link Phúc Anh'], 2)
                     }
                     if (data[i]['Link PV']) {
-                        await deleteAndCreate(db, idHangHoa, data[i]['Link PV'], 0)
+                        await deleteAndCreateLink(db, idHangHoa, data[i]['Link PV'], 0)
                     }
                     if (data[i]['Link GearVN']) {
-                        await deleteAndCreate(db, idHangHoa, data[i]['Link GearVN'], 3)
+                        await deleteAndCreateLink(db, idHangHoa, data[i]['Link GearVN'], 3)
                     }
                 }
                 var result = {
@@ -251,7 +331,6 @@ module.exports = {
             var result = {
                 status: Constant.STATUS.FAIL,
             }
-            console.log(error);
             res.json(result)
         }
     }
