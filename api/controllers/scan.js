@@ -238,61 +238,57 @@ module.exports = {
     // search_goods
     functionSearchGoods: async (req, res) => {
         let body = req.body;
-        var config = {
-            user: 'sa',
-            password: '1234',
-            server: 'localhost',
-            database: 'HNC_DB',
-            options: {
-                encrypt: false,
-            },
-        };
+        var config = database.config;
         var groupKey = [];
         groupKey = convertStringToList(body.groupKey);
         var whereGroup = '';
-        if (groupKey.length > 0)
-            for (var i = 0; i < groupKey.length; i++) {
-                if (i <= 0)
-                    whereGroup += `UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase() + `%'`
-                else
-                    whereGroup += `or UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase() + `%'`
-            }
-
-        var whereGoods = '';
-        if (body.goodsKey) {
-            if (whereGroup !== '') {
-                whereGoods = ` AND (UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.Code) like N'%` + body.goodsKey.toUpperCase() + `%')`
-
-            }
-            else {
-                whereGoods = `(UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase() + `%' or UPPER(scan.Code) like N'%` + body.goodsKey.toUpperCase() + `%')`
-
-            }
-        }
-        var where = `WHERE ` + whereGroup + whereGoods
         var page = 1;
         if (body.page)
             page = Number(body.page);
+        if (groupKey.length > 0) {
+            for (var i = 0; i < groupKey.length; i++) {
+                if (i <= 0)
+                    whereGroup += `UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase().trim() + `%'`
+                else
+                    whereGroup += `or UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase().trim() + `%'`
+            }
+        }
+        var whereGoods = '';
+        if (body.goodsKey) {
+            if (whereGroup !== '') {
+                whereGoods = ` AND (UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.goodsKey.toUpperCase().trim() + `%')`
+
+            }
+            else {
+                whereGoods = `(UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.goodsKey.toUpperCase().trim() + `%')`
+
+            }
+        }
         var offset = 10 * (page - 1);
+        var where;
+        if (whereGroup !== '')
+            where = `WHERE ` + '(' + whereGroup + ')' + whereGoods;
+        else
+            where = `WHERE ` + whereGoods;
         var fQuery = '';
-        var pageQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`;
+        var pageQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods`;
         if (whereGoods !== '' || whereGroup !== '') {
-            fQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
+            fQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods
             ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
-            pageQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods`
+            pageQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods`
         }
         else if (whereGoods === '' || whereGroup === '') {
-            fQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods
+            fQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods
             ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
         }
         sql.connect(config, async function (err) {
             var request = new sql.Request();
 
-            var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, Code, idHangHoa, part, nameGoods, 
+            var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods, 
             SUM(priceHNC) priceHNC, SUM(priceGearVN) priceGearVN, SUM(pricePhucAnh) pricePhucAnh, SUM(priceAnPhat) priceAnPhat, SUM(pricePhongVu) pricePhongVu FROM (
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code ,
+            goods.ID as idHangHoa, goods.code as code ,
             CASE
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
@@ -311,13 +307,13 @@ module.exports = {
             ON prices.IDLink = links.ID
             WHERE links.EnumLoaiLink = 4
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
+            prices.Price, goods.PART, goods.ID, goods.code
             
             UNION ALL
             
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
             CASE
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
@@ -335,13 +331,13 @@ module.exports = {
             ON prices.IDLink = links.ID
             WHERE links.EnumLoaiLink = 3
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
+            prices.Price, goods.PART, goods.ID, goods.code
             
             UNION ALL
             
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
             0 as priceGearVN, 
             CASE
                 WHEN prices.Price is NULL THEN 0
@@ -360,13 +356,13 @@ module.exports = {
             ON prices.IDLink = links.ID
             WHERE links.EnumLoaiLink = 2
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
+            prices.Price, goods.PART, goods.ID, goods.code
             
             UNION ALL
             
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
             0 as priceGearVN, 0 as pricePhucAnh,
             CASE
                 WHEN prices.Price is NULL THEN 0
@@ -385,13 +381,13 @@ module.exports = {
             ON prices.IDLink = links.ID
             WHERE links.EnumLoaiLink = 1
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
+            prices.Price, goods.PART, goods.ID, goods.code
             
             UNION ALL
             
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
-            goods.ID as idHangHoa, goods.Code as code , 0 as priceHNC, 
+            goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
             0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 
             CASE
                 WHEN prices.Price is NULL THEN 0
@@ -410,7 +406,7 @@ module.exports = {
             ON prices.IDLink = links.ID
             WHERE links.EnumLoaiLink = 0
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
-            prices.Price, goods.PART, goods.ID, goods.Code
+            prices.Price, goods.PART, goods.ID, goods.code
             ) as scan               
             `
             // query to the database and get the records
@@ -474,36 +470,61 @@ module.exports = {
                     })
                     for (var j = 0; j < link.length; j++) {
                         if (link[j].EnumLoaiLink === 4) {
+                            if (count4 = 20) {
+                                await getPriceFromService(4, group4, goods);
+                                group4 = {};
+                                count4 = 0;
+                            }
                             group4[count4] = {
-                                code: data[i].Code,
+                                code: data[i].code,
                                 url: link[j].LinkAddress
                             }
                             count4 += 1;
                         }
                         if (link[j].EnumLoaiLink === 3) {
+                            if (count3 = 20) {
+                                await getPriceFromService(3, group3, goods);
+                                group3 = {};
+                                count3 = 0;
+                            }
                             group3[count3] = {
-                                code: data[i].Code,
+                                code: data[i].code,
                                 url: link[j].LinkAddress
                             }
                             count3 += 1
                         }
                         if (link[j].EnumLoaiLink === 2) {
+                            if (count2 = 20) {
+                                await getPriceFromService(2, group2, goods);
+                                group2 = {};
+                                count2 = 0;
+                            }
                             group2[count2] = {
-                                code: data[i].Code,
+                                code: data[i].code,
                                 url: link[j].LinkAddress
                             }
                             count2 += 1;
                         }
                         if (link[j].EnumLoaiLink === 1) {
+                            if (count1 = 20) {
+                                await getPriceFromService(1, group1, goods);
+                                group1 = {};
+                                count1 = 0;
+                            }
                             group1[count1] = {
-                                code: data[i].Code,
+                                code: data[i].code,
                                 url: link[j].LinkAddress
                             }
                             count1 += 1;
                         }
                         if (link[j].EnumLoaiLink === 0) {
+                            if (count0 = 20) {
+                                await getPriceFromService(0, group0, goods);
+                                group0 = {};
+                                count0 = 0;
+                            }
                             group0[count0] = {
-                                code: data[i].Code,
+                                code: data[i].code,
                                 url: link[j].LinkAddress
                             }
                             count0 += 1;
@@ -529,21 +550,21 @@ module.exports = {
                 array[i]['priceAnPhat'] = 0;
                 array[i]['pricePhongVu'] = 0;
                 for (var j = 0; j < goods.length; j++) {
-                    if (goods[j].key == 4 && data[i].Code == goods[j].code) {
+                    if (goods[j].key == 4 && data[i].code == goods[j].code) {
                         array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
                     }
-                    if (goods[j].key == 3 && data[i].Code == goods[j].code) {
+                    if (goods[j].key == 3 && data[i].code == goods[j].code) {
                         array[i]['priceGearVN'] = converPriceToNumber(goods[j].price);
                     }
-                    if (goods[j].key == 2 && data[i].Code == goods[j].code) {
+                    if (goods[j].key == 2 && data[i].code == goods[j].code) {
                         array[i]['pricePhucAnh'] = converPriceToNumber(goods[j].price);
 
                     }
-                    if (goods[j].key == 1 && data[i].Code == goods[j].code) {
+                    if (goods[j].key == 1 && data[i].code == goods[j].code) {
                         array[i]['priceAnPhat'] = converPriceToNumber(goods[j].price);
 
                     }
-                    if (goods[j].key == 0 && data[i].Code == goods[j].code) {
+                    if (goods[j].key == 0 && data[i].code == goods[j].code) {
                         array[i]['pricePhongVu'] = converPriceToNumber(goods[j].price);
 
                     }

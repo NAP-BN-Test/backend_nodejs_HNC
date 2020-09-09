@@ -2,6 +2,15 @@
 const Sequelize = require('sequelize');
 
 module.exports = {
+    config: {
+        user: 'sa',
+        password: '1234',
+        server: 'localhost',
+        database: 'HNC_DB',
+        options: {
+            encrypt: false,
+        },
+    },
     connectDatabase: async function () {
         const db = new Sequelize('HNC_DB', 'sa', '1234', {
             host: 'localhost',

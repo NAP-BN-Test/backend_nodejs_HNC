@@ -10,6 +10,7 @@ const mtblHangHoaGroup3 = require('../tables/tblHangHoaGroup3')
 let apiHangHoa = require('./hang-hoa');
 let apiHangHoaGroup2 = require('./hang-hoa-group2');
 let apiHangHoaGroup3 = require('./hang-hoa-group3');
+var sql = require("mssql");
 
 async function getListHangHoa(db, listID) {
     var listIDHangHoa = await mHangHoa(db).findAll({
@@ -245,108 +246,43 @@ module.exports = {
                 if (body.page)
                     page = Number(body.page);
             }
-            await mtblHangHoaGroup1(db).findAll({
-                order: [['ID', 'DESC']],
-                // offset: itemPerPage * (page - 1),
-                // limit: itemPerPage
-            }).then(async data => {
-                for (var i = 0; i < data.length; i++) {
-                    var check = await mtblHangHoaGroup2(db).findAll({
-                        where: { IDGroup1: data[i].ID }
-                    })
-                    if (check.length === 0) {
-                        arrayf.push({
-                            idGroup1: data[i].ID,
-                            tenNhomHang1: data[i].TenNhomHang ? data[i].TenNhomHang : '',
-                            flagSelect1: data[i].FlagSelect ? data[i].FlagSelect : '',
-                            idGroup2: null,
-                            tenNhomHang2: '',
-                            flagSelect2: '',
-                            idGroup3: null,
-                            tenNhomHang3: '',
-                            flagSelect3: '',
-                        })
-                        continue;
-                    }
-                    await mtblHangHoaGroup2(db).findAll({
-                        where: { IDGroup1: data[i].ID }
-                    }).then(async group2 => {
-                        for (var j = 0; j < group2.length; j++) {
-                            var check = await mtblHangHoaGroup3(db).findAll({
-                                where: { IDGroup2: group2[j].ID }
-                            })
-                            if (check.length === 0) {
-                                arrayf.push({
-                                    idGroup1: data[i].ID,
-                                    tenNhomHang1: data[i].TenNhomHang ? data[i].TenNhomHang : '',
-                                    flagSelect1: data[i].FlagSelect ? data[i].FlagSelect : '',
-                                    idGroup2: group2[j] ? group2[j].ID : null,
-                                    tenNhomHang2: group2[j].TenNhomHang ? group2[j].TenNhomHang : '',
-                                    flagSelect2: group2[j].FlagSelect ? group2[j].FlagSelect : '',
-                                    idGroup3: null,
-                                    tenNhomHang3: '',
-                                    flagSelect3: '',
-                                })
-                                continue;
-                            }
-                            await mtblHangHoaGroup3(db).findAll({
-                                where: { IDGroup2: group2[j].ID }
-                            }).then(group3 => {
-                                for (var e = 0; e < group3.length; e++) {
-                                    arrayf.push({
-                                        idGroup1: data[i].ID,
-                                        tenNhomHang1: data[i].TenNhomHang ? data[i].TenNhomHang : '',
-                                        flagSelect1: data[i].FlagSelect ? data[i].FlagSelect : '',
-                                        idGroup2: group2[j] ? group2[j].ID : null,
-                                        tenNhomHang2: group2[j].TenNhomHang ? group2[j].TenNhomHang : '',
-                                        flagSelect2: group2[j].FlagSelect ? group2[j].FlagSelect : '',
-                                        idGroup3: group3[e] ? group3[e].ID : null,
-                                        tenNhomHang3: group3[e] ? group3[e].TenNhomHang : '',
-                                        flagSelect3: group3[e] ? group3[e].FlagSelect : '',
-                                    })
-                                }
-                            })
-                        }
-                    })
-                }
-            })
-            var arrayl = [];
-            var count = 0;
+            var query = `SELECT * FROM (
+                SELECT g1.ID idGroup1, g1.TenNhomHang tenNhomHang1, 
+                g2.ID idGroup2, g2.TenNhomHang tenNhomHang2,
+                g3.ID idGroup3, g3.TenNhomHang tenNhomHang3
+                FROM tblHangHoaGroup1 as g1
+                LEFT JOIN tblHangHoaGroup2 as g2
+                ON g2.IDGroup1 = g1.ID
+                LEFT JOIN tblHangHoaGroup3 as g3
+                ON g3.IDGroup2 = g2.ID
+                ) AS groups`
+            var where = '';
+            var offset = itemPerPage * (page - 1);
             if (body.searchKey) {
-                arrayf.forEach(item => {
-                    if (item.tenNhomHang1.toUpperCase().search(body.searchKey.toUpperCase()) !== -1 || item.tenNhomHang2.toUpperCase().search(body.searchKey.toUpperCase()) !== -1 || item.tenNhomHang3.toUpperCase().search(body.searchKey.toUpperCase()) !== -1) {
-                        arrayl.push(item);
-                        count += 1;
+                where = `
+                WHERE UPPER(groups.tenNhomHang1) like N'%`+ body.searchKey.toUpperCase().trim() + `%' 
+            or UPPER(groups.tenNhomHang2) like N'%`+ body.searchKey.toUpperCase().trim() + `%' 
+            or UPPER(groups.tenNhomHang3) like N'%`+ body.searchKey.toUpperCase().trim() + `%'`
+            }
+            var whereAndPage = where + ` 
+            ORDER BY groups.idGroup1 ` + `OFFSET ` + offset + ` ROWS FETCH NEXT ` + itemPerPage + ` ROWS ONLY;`
+            console.log(whereAndPage);
+            sql.close();
+            sql.connect(database.config, async function (err) {
+                if (err) console.log(err);
+                var request = new sql.Request();
+                console.log(query + whereAndPage);
+                await request.query(query + whereAndPage, function (err, recordset) {
+                    if (err) console.log(err)
+                    var result = {
+                        status: Constant.STATUS.SUCCESS,
+                        message: '',
+                        array: recordset.recordsets[0],
+                        all: recordset.rowsAffected[0],
                     }
+                    res.json(result)
                 })
-            } else {
-                var count1 = await mtblHangHoaGroup1(db).count();
-                var count2 = await mtblHangHoaGroup2(db).count();
-                var count3 = await mtblHangHoaGroup3(db).count();
-                var idGroup1 = [];
-                var idGroup2 = [];
-                await mtblHangHoaGroup2(db).findAll({ IDGroup1: null }).then(data => {
-                    data.forEach(item => {
-                        idGroup1.push(item.IDGroup1);
-                    })
-                });
-                await mtblHangHoaGroup3(db).findAll({ IDGroup2: null }).then(data => {
-                    data.forEach(item => {
-                        idGroup2.push(item.IDGroup2);
-                    })
-                });
-                var count1has2 = countDulicant(idGroup1);
-                var count2has3 = countDulicant(idGroup2);
-                arrayl = arrayf;
-                count = count3 + (count1 - count1has2) + (count2 - count2has3);
-            }
-            var result = {
-                status: Constant.STATUS.SUCCESS,
-                message: '',
-                array: arrayl,
-                all: count,
-            }
-            res.json(result)
+            })
 
         })
     },
