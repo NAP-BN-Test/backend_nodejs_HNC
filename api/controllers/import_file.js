@@ -214,6 +214,8 @@ module.exports = {
     importFile: (req, res) => {
         try {
             let body = req.body;
+            console.log(body.data);
+            console.log(body);
             var data = JSON.parse(body.data);
             database.connectDatabase().then(async db => {
                 for (var i = 0; i < data.length; i++) {

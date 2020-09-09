@@ -202,18 +202,36 @@ module.exports = {
                 for (let field of listUpdate) {
                     update[field.key] = field.value
                 }
-                await mtblLinkGetPrice(db).destroy({
-                    where: { IDHangHoa: body.id }
-                })
                 if (body.items) {
                     var listObjLink = JSON.parse(body.items);
                     for (var i = 0; i < listObjLink.length; i++) {
-                        await mtblLinkGetPrice(db).create({
-                            IDHangHoa: body.id ? body.id : null,
-                            LinkAddress: listObjLink[i].link ? listObjLink[i].link : '',
-                            Description: '',
-                            EnumLoaiLink: listObjLink[i].name.number ? listObjLink[i].name.number : '',
+                        var link = await mtblLinkGetPrice(db).findAll({
+                            where: {
+                                [Op.and]: [
+                                    { IDHangHoa: body.id },
+                                    { EnumLoaiLink: listObjLink[i].name.number ? listObjLink[i].name.number : 0 }
+                                ]
+                            }
                         })
+                        if (link.length > 0) {
+                            await mtblLinkGetPrice(db).update({
+                                LinkAddress: listObjLink[i].link ? listObjLink[i].link : '',
+                            }, {
+                                where: {
+                                    [Op.and]: [
+                                        { IDHangHoa: body.id },
+                                        { EnumLoaiLink: listObjLink[i].name.number ? listObjLink[i].name.number : 0 }
+                                    ]
+                                }
+                            })
+                        } else {
+                            await mtblLinkGetPrice(db).create({
+                                IDHangHoa: body.id ? body.id : null,
+                                LinkAddress: listObjLink[i].link ? listObjLink[i].link : '',
+                                Description: '',
+                                EnumLoaiLink: listObjLink[i].name.number ? listObjLink[i].name.number : '',
+                            })
+                        }
                     }
                 }
                 mHangHoa(db).update(update, { where: { ID: body.id } }).then(() => {

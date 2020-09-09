@@ -42,6 +42,9 @@ module.exports = {
                     where: { UserName: body.userName, Password: body.password },
                 })
                 if (data) {
+                    if (!data.Active) {
+                        return res.json(Result.LOGIN_FAIL)
+                    }
                     var obj = {
                         id: data.ID,
                         name: data.Name,

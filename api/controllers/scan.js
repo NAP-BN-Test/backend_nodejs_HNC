@@ -62,8 +62,6 @@ function pushDataToArray(data, array) {
 
 async function getPriceFromService(key, obj, array) {
     if (obj['0']) {
-        console.log(obj);
-        console.log(array);
         if (key == 4)
             await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, obj).then(data => {
                 if (data.data.result)
@@ -71,8 +69,9 @@ async function getPriceFromService(key, obj, array) {
             })
         if (key == 0)
             await axios.post(`http://163.44.192.123:5000/get_prices_pv`, obj).then(data => {
-                if (data.data.result)
+                if (data.data.result) {
                     pushDataToArray(data.data.result, array)
+                }
 
             })
         if (key == 1)
@@ -444,7 +443,6 @@ module.exports = {
     functionScanPrice: async (req, res) => {
         let body = req.body;
         var data = JSON.parse(body.data);
-        console.log(data.length);
         var columnScan = JSON.parse(body.columnScan);
         var arrayScan = [0, 1, 2, 3, 4]
         if (columnScan.length < 1)
@@ -570,19 +568,18 @@ module.exports = {
                     }
                 }
             }
-            var result = {
-                status: Constant.STATUS.SUCCESS,
-                message: '',
-                array: array,
-            }
-            res.json(result);
-            // creare price
             for (var i = 0; i < array.length; i++) {
                 var links = await mtblLinkGetPrice(db).findAll({
                     where: { IDHangHoa: array[i].idHangHoa }
                 })
                 await createPrice(links, db, array[i]);
             }
+            var result = {
+                status: Constant.STATUS.SUCCESS,
+                message: '',
+                array: array,
+            }
+            res.json(result);
         })
     }
 }

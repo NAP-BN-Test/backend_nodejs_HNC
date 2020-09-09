@@ -241,6 +241,7 @@ module.exports = {
             var arrayf = [];
             var itemPerPage = 10000;
             var page = 1;
+            console.log(body);
             if (body.itemPerPage) {
                 itemPerPage = Number(body.itemPerPage);
                 if (body.page)
@@ -266,19 +267,22 @@ module.exports = {
             }
             var whereAndPage = where + ` 
             ORDER BY groups.idGroup1 ` + `OFFSET ` + offset + ` ROWS FETCH NEXT ` + itemPerPage + ` ROWS ONLY;`
-            console.log(whereAndPage);
             sql.close();
+            var count;
             sql.connect(database.config, async function (err) {
                 if (err) console.log(err);
                 var request = new sql.Request();
-                console.log(query + whereAndPage);
+                await request.query(query + where, function (err, recordset) {
+                    if (err) console.log(err)
+                    count = recordset.rowsAffected[0];
+                })
                 await request.query(query + whereAndPage, function (err, recordset) {
                     if (err) console.log(err)
                     var result = {
                         status: Constant.STATUS.SUCCESS,
                         message: '',
                         array: recordset.recordsets[0],
-                        all: recordset.rowsAffected[0],
+                        all: count,
                     }
                     res.json(result)
                 })
