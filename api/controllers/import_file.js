@@ -214,8 +214,6 @@ module.exports = {
     importFile: (req, res) => {
         try {
             let body = req.body;
-            console.log(body.data);
-            console.log(body);
             var data = JSON.parse(body.data);
             database.connectDatabase().then(async db => {
                 for (var i = 0; i < data.length; i++) {
@@ -233,11 +231,11 @@ module.exports = {
                     }
                     else {
                         var checkGroup1 = await mtblHangHoaGroup1(db).findOne({
-                            where: { TenNhomHang: data[i]['Nhóm cấp 1'] }
+                            where: { TenNhomHang: data[i]['Nhóm cấp 1'] ? data[i]['Nhóm cấp 1'] : '' }
                         });
                         if (checkGroup1) {
                             idGroup1 = checkGroup1.ID
-                            if (pushNamereturnIDGroup2(db, data[i]['Nhóm cấp 2'], idGroup1)) {
+                            if (await pushNamereturnIDGroup2(db, data[i]['Nhóm cấp 2'], idGroup1)) {
                                 Group2 = await pushNamereturnIDGroup2(db, data[i]['Nhóm cấp 2'], idGroup1)
                                 idGroup2 = Group2
                                 if (data[i]['Nhóm cấp 3'] && idGroup2) {
@@ -261,7 +259,7 @@ module.exports = {
                                 })
                                 idGroup2 = group2.ID
                                 if (data[i]['Nhóm cấp 3']) {
-                                    if (pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2)) {
+                                    if (await pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2)) {
                                         idGroup3 = await pushNamereturnIDGroup3(db, data[i]['Nhóm cấp 3'], idGroup2);
                                     } else {
                                         var group3 = await mtblHangHoaGroup3(db).create({

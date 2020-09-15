@@ -270,6 +270,7 @@ module.exports = {
     // get_list_goods 
     getListGoods: (req, res) => {
         let body = req.body;
+        console.log(body);
         database.connectDatabase().then(async db => {
             let where = {};
             let whereSearch = [];

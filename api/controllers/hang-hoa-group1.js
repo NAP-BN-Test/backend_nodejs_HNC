@@ -238,10 +238,8 @@ module.exports = {
     getGroupsFromGroup1: (req, res) => {
         let body = req.body;
         database.connectDatabase().then(async db => {
-            var arrayf = [];
             var itemPerPage = 10000;
             var page = 1;
-            console.log(body);
             if (body.itemPerPage) {
                 itemPerPage = Number(body.itemPerPage);
                 if (body.page)
