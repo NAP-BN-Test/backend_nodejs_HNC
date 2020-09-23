@@ -238,28 +238,30 @@ module.exports = {
     functionSearchGoods: async (req, res) => {
         let body = req.body;
         var config = database.config;
-        var groupKey = [];
-        groupKey = convertStringToList(body.groupKey);
+        console.log(body);
         var whereGroup = '';
         var page = 1;
         if (body.page)
             page = Number(body.page);
-        if (groupKey.length > 0) {
-            for (var i = 0; i < groupKey.length; i++) {
-                if (i <= 0)
-                    whereGroup += `UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase().trim() + `%'`
-                else
-                    whereGroup += `or UPPER(scan.tenNhomHang1) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang2) like N'%` + groupKey[i].toUpperCase().trim() + `%' or UPPER(scan.tenNhomHang3) like N'%` + groupKey[i].toUpperCase().trim() + `%'`
-            }
+        if (body.idGroup1) {
+            whereGroup = `scan.idGroup1 = ` + body.idGroup1;
+
+        }
+        if (body.idGroup2) {
+            whereGroup = `scan.idGroup2 = ` + body.idGroup2;
+
+        }
+        if (body.idGroup3) {
+            whereGroup = `scan.idGroup3= ` + body.idGroup3;
         }
         var whereGoods = '';
-        if (body.goodsKey) {
+        if (body.searchKey) {
             if (whereGroup !== '') {
-                whereGoods = ` AND (UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.goodsKey.toUpperCase().trim() + `%')`
+                whereGoods = ` AND (UPPER(scan.nameGoods) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.searchKey.toUpperCase().trim() + `%')`
 
             }
             else {
-                whereGoods = `(UPPER(scan.nameGoods) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.goodsKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.goodsKey.toUpperCase().trim() + `%')`
+                whereGoods = `(UPPER(scan.nameGoods) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.searchKey.toUpperCase().trim() + `%')`
 
             }
         }
@@ -269,6 +271,7 @@ module.exports = {
             where = `WHERE ` + '(' + whereGroup + ')' + whereGoods;
         else
             where = `WHERE ` + whereGoods;
+        console.log(where);
         var fQuery = '';
         var pageQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods`;
         if (whereGoods !== '' || whereGroup !== '') {
