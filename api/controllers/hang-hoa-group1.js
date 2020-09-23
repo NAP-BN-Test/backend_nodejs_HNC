@@ -11,6 +11,8 @@ let apiHangHoa = require('./hang-hoa');
 let apiHangHoaGroup2 = require('./hang-hoa-group2');
 let apiHangHoaGroup3 = require('./hang-hoa-group3');
 var sql = require("mssql");
+const tblHangHoaGroup2 = require('../tables/tblHangHoaGroup2');
+const tblHangHoaGroup3 = require('../tables/tblHangHoaGroup3');
 
 async function getListHangHoa(db, listID) {
     var listIDHangHoa = await mHangHoa(db).findAll({
@@ -336,5 +338,48 @@ module.exports = {
             }
             res.json(result);
         })
-    }
+    },
+    // get_menu_goods
+    getMenuGroupGoods: (req, res) => {
+        let body = req.body;
+        database.connectDatabase().then(async db => {
+            var array = [];
+            await mtblHangHoaGroup1(db).findAll().then(async group1 => {
+                for (var i = 0; i < group1.length; i++) {
+                    var objGroup = {
+                        idGroup1: group1[i].ID,
+                        groupName1: group1[i].TenNhomHang,
+                    };
+                    await tblHangHoaGroup2(db).findAll({
+                        where: { IDGroup1: group1[i].ID }
+                    }).then(async group2 => {
+                        var arrayGroup2 = [];
+                        for (var j = 0; j < group2.length; j++) {
+                            var objGroup2 = {
+                                idGroup2: group2[j].ID,
+                                groupName2: group2[j].TenNhomHang,
+                            }
+                            await tblHangHoaGroup3(db).findAll({
+                                where: { IDGroup2: group2[j].ID }
+                            }).then(group3 => {
+                                var arrayGroup3 = [];
+                                for (var e = 0; e < group3.length; e++) {
+                                    var objGroup3 = {
+                                        idGroup3: group3[e].ID,
+                                        groupName3: group3[e].TenNhomHang,
+                                    }
+                                    arrayGroup3.push(objGroup3);
+                                }
+                                objGroup2['group3'] = arrayGroup3;
+                            })
+                            arrayGroup2.push(objGroup2);
+                        }
+                        objGroup['group2'] = arrayGroup2;
+                    })
+                    array.push(objGroup)
+                }
+            })
+            res.json(array);
+        })
+    },
 }

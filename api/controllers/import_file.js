@@ -21,7 +21,7 @@ async function pushNamereturnIDGroup2(db, name, idGroup1) {
     var check = await mtblHangHoaGroup2(db).findOne({
         where: {
             [Op.and]: [
-                { TenNhomHang: name },
+                { TenNhomHang: name.toString() },
                 { IDGroup1: idGroup1 },
             ]
         }
@@ -214,9 +214,10 @@ module.exports = {
     importFile: (req, res) => {
         try {
             let body = req.body;
-            var data = JSON.parse(body.data);
+            var data = JSON.parse(body.data.replace(/%5555%/g, '&'));
             database.connectDatabase().then(async db => {
                 for (var i = 0; i < data.length; i++) {
+                    if (!data[i]['Nhóm cấp 1']) continue;
                     var idGroup1;
                     var idGroup2;
                     var idGroup3;

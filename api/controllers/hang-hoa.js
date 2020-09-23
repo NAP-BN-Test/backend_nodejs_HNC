@@ -161,7 +161,6 @@ module.exports = {
     // update_goods : cập nhật hàng hóa
     updateGoods: (req, res) => {
         let body = req.body;
-        console.log(body);
         database.connectDatabase().then(async db => {
             try {
                 let listUpdate = [];
@@ -280,48 +279,28 @@ module.exports = {
                     { Code: { [Op.like]: '%' + body.searchKey + '%' } },
                     { PART: { [Op.like]: '%' + body.searchKey + '%' } },
                 ];
-                var gr1 = await mtblHangHoaGroup1(db).findAll({
-                    where: {
-                        [Op.or]: [
-                            { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
-                        ]
-                    }
-                })
-
-                var gr2 = await mtblHangHoaGroup2(db).findAll({
-                    where: {
-                        [Op.or]: [
-                            { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
-                        ]
-                    }
-                })
-                var gr3 = await mtblHangHoaGroup3(db).findAll({
-                    where: {
-                        [Op.or]: [
-                            { TenNhomHang: { [Op.like]: '%' + body.searchKey + '%' } },
-                        ]
-                    }
-                })
-                var idGroup = [];
-                gr1.forEach(item => {
-                    idGroup.push(item.ID);
-                })
-                gr2.forEach(item => {
-                    idGroup.push(item.ID);
-                })
-                gr3.forEach(item => {
-                    idGroup.push(item.ID);
-                })
-                whereSearch.push({ IDGroup1: { [Op.in]: idGroup } },)
-                whereSearch.push({ IDGroup2: { [Op.in]: idGroup } },)
-                whereSearch.push({ IDGroup3: { [Op.in]: idGroup } },)
             } else {
                 whereSearch = [
                     { NameHangHoa: { [Op.like]: '%' + '' + '%' } },
                 ];
             }
-            where = {
-                [Op.or]: whereSearch,
+            if (body.idGroup1) {
+                where = {
+                    [Op.or]: whereSearch,
+                    [Op.and]: { IDGroup1: body.idGroup1 }
+                }
+            }
+            if (body.idGroup2) {
+                where = {
+                    [Op.or]: whereSearch,
+                    [Op.and]: { IDGroup2: body.idGroup2 }
+                }
+            }
+            if (body.idGroup3) {
+                where = {
+                    [Op.or]: whereSearch,
+                    [Op.and]: { IDGroup3: body.idGroup3 }
+                }
             }
             var count = await mHangHoa(db).count({ where: where });
             var array = [];

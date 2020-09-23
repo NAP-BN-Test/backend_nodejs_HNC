@@ -293,13 +293,13 @@ module.exports = {
                 ELSE prices.Price
             END as priceHNC,
             0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
+            FROM tblHangHoa as goods
+            LEFT JOIN tblHangHoaGroup1 as g1
+            ON g1.ID = goods.IDGroup1
             LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
+            ON g2.ID = goods.IDGroup2 AND g2.IDGroup1 = g1.ID
             LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            ON g3.ID = goods.IDGroup3 AND g3.IDGroup2 = g2.ID
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
@@ -307,9 +307,9 @@ module.exports = {
             WHERE links.EnumLoaiLink = 4
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
-            
+                        
             UNION ALL
-            
+                        
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
             goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
@@ -317,13 +317,13 @@ module.exports = {
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
             END as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
+            FROM tblHangHoa as goods
+            LEFT JOIN tblHangHoaGroup1 as g1
+            ON g1.ID = goods.IDGroup1
             LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
+            ON g2.ID = goods.IDGroup2 AND g2.IDGroup1 = g1.ID
             LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            ON g3.ID = goods.IDGroup3 AND g3.IDGroup2 = g2.ID
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
@@ -331,9 +331,9 @@ module.exports = {
             WHERE links.EnumLoaiLink = 3
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
-            
+                        
             UNION ALL
-            
+                        
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
             goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
@@ -342,23 +342,23 @@ module.exports = {
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
             END as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
+            FROM tblHangHoa as goods
+            LEFT JOIN tblHangHoaGroup1 as g1
+            ON g1.ID = goods.IDGroup1
             LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
+            ON g2.ID = goods.IDGroup2 AND g2.IDGroup1 = g1.ID
             LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
-            LEFT JOIN tblLinkGetPrice as links       
+            ON g3.ID = goods.IDGroup3 AND g3.IDGroup2 = g2.ID
+            LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
             ON prices.IDLink = links.ID
             WHERE links.EnumLoaiLink = 2
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
-            
+                        
             UNION ALL
-            
+                        
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
             goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
@@ -367,13 +367,13 @@ module.exports = {
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
             END as priceAnPhat, 0 pricePhongVu
-            FROM tblHangHoaGroup1 as g1
+            FROM tblHangHoa as goods
+            LEFT JOIN tblHangHoaGroup1 as g1
+            ON g1.ID = goods.IDGroup1
             LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
+            ON g2.ID = goods.IDGroup2 AND g2.IDGroup1 = g1.ID
             LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            ON g3.ID = goods.IDGroup3 AND g3.IDGroup2 = g2.ID
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
@@ -381,9 +381,9 @@ module.exports = {
             WHERE links.EnumLoaiLink = 1
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
-            
+                        
             UNION ALL
-            
+                        
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
             goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
@@ -392,13 +392,13 @@ module.exports = {
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
             END as pricePhongVu
-            FROM tblHangHoaGroup1 as g1
+            FROM tblHangHoa as goods
+            LEFT JOIN tblHangHoaGroup1 as g1
+            ON g1.ID = goods.IDGroup1
             LEFT JOIN tblHangHoaGroup2 as g2
-            ON g2.IDGroup1 = g1.ID
+            ON g2.ID = goods.IDGroup2 AND g2.IDGroup1 = g1.ID
             LEFT JOIN tblHangHoaGroup3 as g3
-            ON g3.IDGroup2 = g2.ID
-            LEFT JOIN tblHangHoa as goods
-            ON goods.IDGroup1 = g1.ID OR goods.IDGroup2 = g2.ID OR goods.IDGroup3 = g3.ID
+            ON g3.ID = goods.IDGroup3 AND g3.IDGroup2 = g2.ID
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
@@ -406,7 +406,7 @@ module.exports = {
             WHERE links.EnumLoaiLink = 0
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
-            ) as scan               
+            ) as scan              
             `
             // query to the database and get the records
             var count;
