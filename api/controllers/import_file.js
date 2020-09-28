@@ -12,9 +12,6 @@ let apiHangHoaGroup2 = require('./hang-hoa-group2');
 let apiHangHoaGroup3 = require('./hang-hoa-group3');
 const bodyParser = require('body-parser');
 var mtblLinkGetPrice = require('../tables/tblLinkGetPrice');
-let apiLink = require('./link-get-price');
-var mtblPrice = require('../tables/tblPrice');
-
 
 
 async function pushNamereturnIDGroup2(db, name, idGroup1) {
@@ -214,7 +211,7 @@ module.exports = {
     importFile: (req, res) => {
         try {
             let body = req.body;
-            var data = JSON.parse(body.data.replace(/%5555%/g, '&'));
+            var data = JSON.parse(body.data.replace(/!!@@##/g, '&'));
             database.connectDatabase().then(async db => {
                 for (var i = 0; i < data.length; i++) {
                     if (!data[i]['Nhóm cấp 1']) continue;

@@ -70,6 +70,35 @@ async function checkGroup(db, idGroup1, idGroup2, idGroup3) {
     }
 }
 
+async function funtionFindLinkGetPrice(db, id, listLink) {
+    if (listLink.length > 0) {
+        var linkOfGoods = await mtblLinkGetPrice(db).findAll({
+            where: {
+                [Op.and]: [
+                    {
+                        [Op.not]: {
+                            EnumLoaiLink: listLink,
+                        }
+                    },
+                    { IDHangHoa: id }
+
+                ]
+            }
+        })
+    }
+    else {
+        var linkOfGoods = await mtblLinkGetPrice(db).findAll({
+            where: {
+                [Op.and]: [
+                    { IDHangHoa: id }
+
+                ]
+            }
+        })
+    }
+    return linkOfGoods
+}
+
 module.exports = {
     checkGroup,
     deleteHangHoa,
@@ -203,7 +232,9 @@ module.exports = {
                 }
                 if (body.items) {
                     var listObjLink = JSON.parse(body.items);
+                    var listLink = [];
                     for (var i = 0; i < listObjLink.length; i++) {
+                        listLink.push(listObjLink[i].name.number);
                         var link = await mtblLinkGetPrice(db).findAll({
                             where: {
                                 [Op.and]: [
@@ -232,7 +263,17 @@ module.exports = {
                             })
                         }
                     }
+                    var linkOfGoods = await funtionFindLinkGetPrice(db, body.id, listLink);
                 }
+                else {
+                    var linkOfGoods = await funtionFindLinkGetPrice(db, body.id, []);
+                }
+                var listLink = [];
+                linkOfGoods.forEach(item => {
+                    listLink.push(item.ID)
+                })
+                if (listLink.length > 0)
+                    await apiLinkGetPrice.deletetblLinkGetPrice(db, listLink);
                 mHangHoa(db).update(update, { where: { ID: body.id } }).then(() => {
                     res.json(Result.ACTION_SUCCESS)
                 }).catch(() => {

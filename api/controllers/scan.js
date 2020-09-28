@@ -306,7 +306,7 @@ module.exports = {
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
+            ON prices.IDLink = links.ID and prices.DateGet = (SELECT MAX(DateGet) from tblPrice WHERE IDLink = links.ID)
             WHERE links.EnumLoaiLink = 4
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
@@ -330,7 +330,7 @@ module.exports = {
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
+            ON prices.IDLink = links.ID and prices.DateGet = (SELECT MAX(DateGet) from tblPrice WHERE IDLink = links.ID)
             WHERE links.EnumLoaiLink = 3
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
@@ -355,7 +355,7 @@ module.exports = {
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
+            ON prices.IDLink = links.ID and prices.DateGet = (SELECT MAX(DateGet) from tblPrice WHERE IDLink = links.ID)
             WHERE links.EnumLoaiLink = 2
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
@@ -380,7 +380,7 @@ module.exports = {
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
+            ON prices.IDLink = links.ID and prices.DateGet = (SELECT MAX(DateGet) from tblPrice WHERE IDLink = links.ID)
             WHERE links.EnumLoaiLink = 1
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
@@ -405,7 +405,7 @@ module.exports = {
             LEFT JOIN tblLinkGetPrice as links
             ON links.IDHangHoa = goods.ID
             LEFT JOIN tblPrice as prices
-            ON prices.IDLink = links.ID
+            ON prices.IDLink = links.ID and prices.DateGet = (SELECT MAX(DateGet) from tblPrice WHERE IDLink = links.ID)
             WHERE links.EnumLoaiLink = 0
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
