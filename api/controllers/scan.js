@@ -175,7 +175,7 @@ async function createPrice(objLink, db, objResult) {
                 if (objLink[j].EnumLoaiLink === 0) {
                     await mtblPrice(db).create({
                         IDLink: objLink[j].ID,
-                        Price: objResult.pricePhongV ? objResult.pricePhongVu : 0,
+                        Price: objResult.pricePhongVu ? objResult.pricePhongVu : 0,
                     })
                 }
             }
@@ -575,6 +575,7 @@ module.exports = {
                 var links = await mtblLinkGetPrice(db).findAll({
                     where: { IDHangHoa: array[i].idHangHoa }
                 })
+                console.log(array[i]);
                 await createPrice(links, db, array[i]);
             }
             var result = {
