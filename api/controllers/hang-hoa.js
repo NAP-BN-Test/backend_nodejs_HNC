@@ -310,6 +310,7 @@ module.exports = {
     // get_list_goods 
     getListGoods: (req, res) => {
         let body = req.body;
+        console.log('get_list_goods');
         console.log(body);
         database.connectDatabase().then(async db => {
             let where = {};
@@ -343,6 +344,12 @@ module.exports = {
                     [Op.and]: { IDGroup3: body.idGroup3 }
                 }
             }
+            if (!body.idGroup1 && !body.idGroup2 && !body.idGroup3) {
+                where = {
+                    [Op.or]: whereSearch,
+                }
+            }
+
             var count = await mHangHoa(db).count({ where: where });
             var array = [];
             var itemPerPage = 10000;

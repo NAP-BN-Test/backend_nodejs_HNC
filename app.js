@@ -38,6 +38,22 @@ let connect = require('./api/database')
 
 connect.connectDatabase();
 
+// test zalo
+var ZaloSocial = require('zalo-sdk').ZaloSocial;
+
+var zsConfig = {
+    appId: '2568387362160739467',
+    secretkey: 'BXRLx82AGrl2gBRoWDcN'
+};
+var ZSClient = new ZaloSocial(zsConfig);
+app.get('/zalo', function (req, res) {
+    ZSClient.api('me/friends', function (response) {
+        console.log('response', response);
+        res.json(response);
+    });
+})
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 const port = process.env.PORT || 1598
 
 server.listen(port, function () {

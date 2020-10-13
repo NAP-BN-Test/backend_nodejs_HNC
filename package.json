@@ -24,6 +24,7 @@
     "sequelize": "^6.3.4",
     "sequelize-auto": "^0.5.4",
     "sequelize-cli": "^6.2.0",
-    "tedious": "^9.2.1"
+    "tedious": "^9.2.1",
+    "zalo-sdk": "^2.0.4"
   }
 }

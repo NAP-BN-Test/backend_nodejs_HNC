@@ -203,6 +203,33 @@ async function deleteAndCreateLink(db, idHangHoa, linkPrice, key) {
             EnumLoaiLink: 1,
             LinkAddress: linkPrice,
         })
+    } else if (key === 5) {
+        var link = await mtblLinkGetPrice(db).findAll({
+            where: {
+                [Op.and]: [
+                    { IDHangHoa: idHangHoa },
+                    { EnumLoaiLink: 5 }
+                ]
+            }
+        })
+        if (link.length > 0) {
+            await mtblLinkGetPrice(db).update({
+                LinkAddress: linkPrice,
+            }, {
+                where: {
+                    [Op.and]: [
+                        { IDHangHoa: idHangHoa },
+                        { EnumLoaiLink: 5 }
+                    ]
+                }
+            })
+            return
+        }
+        await mtblLinkGetPrice(db).create({
+            IDHangHoa: idHangHoa,
+            EnumLoaiLink: 5,
+            LinkAddress: linkPrice,
+        })
     }
 }
 
@@ -301,6 +328,9 @@ module.exports = {
                             IDGroup3: idGroup3,
                         })
                         idHangHoa = hanghoa.ID
+                    }
+                    if (data[i]['Link XG']) {
+                        await deleteAndCreateLink(db, idHangHoa, data[i]['Link XG'], 5)
                     }
                     if (data[i]['Link HNC']) {
                         await deleteAndCreateLink(db, idHangHoa, data[i]['Link HNC'], 4)

@@ -344,14 +344,15 @@ module.exports = {
         let body = req.body;
         database.connectDatabase().then(async db => {
             var array = [];
-            await mtblHangHoaGroup1(db).findAll().then(async group1 => {
+            await mtblHangHoaGroup1(db).findAll({ order: [['TenNhomHang', 'ASC']] }).then(async group1 => {
                 for (var i = 0; i < group1.length; i++) {
                     var objGroup = {
                         idGroup1: group1[i].ID,
                         groupName1: group1[i].TenNhomHang,
                     };
                     await tblHangHoaGroup2(db).findAll({
-                        where: { IDGroup1: group1[i].ID }
+                        where: { IDGroup1: group1[i].ID },
+                        order: [['TenNhomHang', 'ASC']]
                     }).then(async group2 => {
                         var arrayGroup2 = [];
                         for (var j = 0; j < group2.length; j++) {
@@ -360,7 +361,8 @@ module.exports = {
                                 groupName2: group2[j].TenNhomHang,
                             }
                             await tblHangHoaGroup3(db).findAll({
-                                where: { IDGroup2: group2[j].ID }
+                                where: { IDGroup2: group2[j].ID },
+                                order: [['TenNhomHang', 'ASC']]
                             }).then(group3 => {
                                 var arrayGroup3 = [];
                                 for (var e = 0; e < group3.length; e++) {

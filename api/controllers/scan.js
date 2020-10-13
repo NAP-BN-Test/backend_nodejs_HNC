@@ -62,11 +62,18 @@ function pushDataToArray(data, array) {
 
 async function getPriceFromService(key, obj, array) {
     if (obj['0']) {
+        if (key == 5)
+            await axios.post(`http://163.44.192.123:5000/get_prices_xg`, obj).then(data => {
+                if (data.data.result)
+                    pushDataToArray(data.data.result, array)
+            })
+
         if (key == 4)
             await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, obj).then(data => {
                 if (data.data.result)
                     pushDataToArray(data.data.result, array)
             })
+
         if (key == 0)
             await axios.post(`http://163.44.192.123:5000/get_prices_pv`, obj).then(data => {
                 if (data.data.result) {
@@ -107,6 +114,14 @@ async function createPrice(objLink, db, objResult) {
                 where: { IDLink: objLink[j].ID }
             })
             if (pricedb) {
+                if (objLink[j].EnumLoaiLink === 5) {
+                    if (pricedb.Price !== objResult.priceXG) {
+                        await mtblPrice(db).create({
+                            IDLink: objLink[j].ID,
+                            Price: objResult.priceXG ? objResult.priceXG : 0,
+                        })
+                    }
+                }
                 if (objLink[j].EnumLoaiLink === 4) {
                     if (pricedb.Price !== objResult.priceHNC) {
                         await mtblPrice(db).create({
@@ -148,6 +163,12 @@ async function createPrice(objLink, db, objResult) {
                     }
                 }
             } else {
+                if (objLink[j].EnumLoaiLink === 5) {
+                    await mtblPrice(db).create({
+                        IDLink: objLink[j].ID,
+                        Price: objResult.priceXG ? objResult.priceXG : 0,
+                    })
+                }
                 if (objLink[j].EnumLoaiLink === 4) {
                     await mtblPrice(db).create({
                         IDLink: objLink[j].ID,
@@ -200,6 +221,7 @@ async function getPriceFromDatabase(obj, db) {
     obj['pricePhucAnh'] = 0;
     obj['priceAnPhat'] = 0;
     obj['pricePhongVu'] = 0;
+    obj['priceXG'] = 0;
     var links = await mtblLinkGetPrice(db).findAll({
         where: { IDHangHoa: obj.idHangHoa }
     })
@@ -213,6 +235,9 @@ async function getPriceFromDatabase(obj, db) {
             limit: 1,
         })
         if (pricedb.length > 0) {
+            if (links[j].EnumLoaiLink === 5) {
+                obj['priceXG'] = pricedb[0].Price ? pricedb[0].Price : 0;
+            }
             if (links[j].EnumLoaiLink === 4) {
                 obj['priceHNC'] = pricedb[0].Price ? pricedb[0].Price : 0;
             }
@@ -238,7 +263,6 @@ module.exports = {
     functionSearchGoods: async (req, res) => {
         let body = req.body;
         var config = database.config;
-        console.log(body);
         var whereGroup = '';
         var page = 1;
         if (body.page)
@@ -271,23 +295,78 @@ module.exports = {
             where = `WHERE ` + '(' + whereGroup + ')' + whereGoods;
         else
             where = `WHERE ` + whereGoods;
-        console.log(where);
         var fQuery = '';
-        var pageQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods`;
+        var pageQuery = ` LEFT JOIN tblLinkGetPrice as linkHNC
+        ON linkHNC.IDHangHoa = scan.idHangHoa AND linkHNC.EnumLoaiLink = 4
+        LEFT JOIN tblLinkGetPrice as linkGVN
+        ON linkGVN.IDHangHoa = scan.idHangHoa AND linkGVN.EnumLoaiLink = 3
+        LEFT JOIN tblLinkGetPrice as linkPA
+        ON linkPA.IDHangHoa = scan.idHangHoa AND linkPA.EnumLoaiLink = 2
+        LEFT JOIN tblLinkGetPrice as linkAP
+        ON linkAP.IDHangHoa = scan.idHangHoa AND linkAP.EnumLoaiLink = 1
+        LEFT JOIN tblLinkGetPrice as linkPV
+        ON linkPV.IDHangHoa = scan.idHangHoa AND linkPV.EnumLoaiLink = 0
+        LEFT JOIN tblLinkGetPrice as linkXG
+        ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5
+        GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code,
+         scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress`;
         if (whereGoods !== '' || whereGroup !== '') {
-            fQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods
+            fQuery = ` LEFT JOIN tblLinkGetPrice as linkHNC
+            ON linkHNC.IDHangHoa = scan.idHangHoa AND linkHNC.EnumLoaiLink = 4
+            LEFT JOIN tblLinkGetPrice as linkGVN
+            ON linkGVN.IDHangHoa = scan.idHangHoa AND linkGVN.EnumLoaiLink = 3
+            LEFT JOIN tblLinkGetPrice as linkPA
+            ON linkPA.IDHangHoa = scan.idHangHoa AND linkPA.EnumLoaiLink = 2
+            LEFT JOIN tblLinkGetPrice as linkAP
+            ON linkAP.IDHangHoa = scan.idHangHoa AND linkAP.EnumLoaiLink = 1
+            LEFT JOIN tblLinkGetPrice as linkPV
+            ON linkPV.IDHangHoa = scan.idHangHoa AND linkPV.EnumLoaiLink = 0 
+            LEFT JOIN tblLinkGetPrice as linkXG
+            ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5`+
+                where
+                + `
+            GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code,
+            scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress
             ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
-            pageQuery = where + ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods`
+            pageQuery = ` LEFT JOIN tblLinkGetPrice as linkHNC
+            ON linkHNC.IDHangHoa = scan.idHangHoa AND linkHNC.EnumLoaiLink = 4
+            LEFT JOIN tblLinkGetPrice as linkGVN
+            ON linkGVN.IDHangHoa = scan.idHangHoa AND linkGVN.EnumLoaiLink = 3
+            LEFT JOIN tblLinkGetPrice as linkPA
+            ON linkPA.IDHangHoa = scan.idHangHoa AND linkPA.EnumLoaiLink = 2
+            LEFT JOIN tblLinkGetPrice as linkAP
+            ON linkAP.IDHangHoa = scan.idHangHoa AND linkAP.EnumLoaiLink = 1
+            LEFT JOIN tblLinkGetPrice as linkPV
+            ON linkPV.IDHangHoa = scan.idHangHoa AND linkPV.EnumLoaiLink = 0 
+            LEFT JOIN tblLinkGetPrice as linkXG
+            ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5 `+
+                where
+                + `
+            GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code,
+            scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress`
         }
         else if (whereGoods === '' || whereGroup === '') {
-            fQuery = ` GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods
+            fQuery = ` LEFT JOIN tblLinkGetPrice as linkHNC
+            ON linkHNC.IDHangHoa = scan.idHangHoa AND linkHNC.EnumLoaiLink = 4
+            LEFT JOIN tblLinkGetPrice as linkGVN
+            ON linkGVN.IDHangHoa = scan.idHangHoa AND linkGVN.EnumLoaiLink = 3
+            LEFT JOIN tblLinkGetPrice as linkPA
+            ON linkPA.IDHangHoa = scan.idHangHoa AND linkPA.EnumLoaiLink = 2
+            LEFT JOIN tblLinkGetPrice as linkAP
+            ON linkAP.IDHangHoa = scan.idHangHoa AND linkAP.EnumLoaiLink = 1
+            LEFT JOIN tblLinkGetPrice as linkPV
+            ON linkPV.IDHangHoa = scan.idHangHoa AND linkPV.EnumLoaiLink = 0
+            LEFT JOIN tblLinkGetPrice as linkXG
+            ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5
+            GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code,
+            scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress
             ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
         }
         sql.connect(config, async function (err) {
             var request = new sql.Request();
 
-            var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, idHangHoa, part, nameGoods, 
-            SUM(priceHNC) priceHNC, SUM(priceGearVN) priceGearVN, SUM(pricePhucAnh) pricePhucAnh, SUM(priceAnPhat) priceAnPhat, SUM(pricePhongVu) pricePhongVu FROM (
+            var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods, 
+            SUM(priceHNC) priceHNC, SUM(priceGearVN) priceGearVN, SUM(pricePhucAnh) pricePhucAnh, SUM(priceAnPhat) priceAnPhat, SUM(pricePhongVu) pricePhongVu, SUM(priceXG) priceXG, linkHNC.LinkAddress linkHNC, linkPV.LinkAddress linkPV, linkAP.LinkAddress linkAP, linkPA.LinkAddress linkPA, linkGVN.LinkAddress linkGVN, linkXG.LinkAddress linkXG FROM (
             SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
             g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
             goods.ID as idHangHoa, goods.code as code ,
@@ -295,7 +374,7 @@ module.exports = {
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
             END as priceHNC,
-            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu, 0 priceXG
             FROM tblHangHoa as goods
             LEFT JOIN tblHangHoaGroup1 as g1
             ON g1.ID = goods.IDGroup1
@@ -319,7 +398,7 @@ module.exports = {
             CASE
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
-            END as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            END as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu, 0 priceXG
             FROM tblHangHoa as goods
             LEFT JOIN tblHangHoaGroup1 as g1
             ON g1.ID = goods.IDGroup1
@@ -344,7 +423,7 @@ module.exports = {
             CASE
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
-            END as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu
+            END as pricePhucAnh, 0 priceAnPhat, 0 pricePhongVu, 0 priceXG
             FROM tblHangHoa as goods
             LEFT JOIN tblHangHoaGroup1 as g1
             ON g1.ID = goods.IDGroup1
@@ -369,7 +448,7 @@ module.exports = {
             CASE
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
-            END as priceAnPhat, 0 pricePhongVu
+            END as priceAnPhat, 0 pricePhongVu, 0 priceXG
             FROM tblHangHoa as goods
             LEFT JOIN tblHangHoaGroup1 as g1
             ON g1.ID = goods.IDGroup1
@@ -394,7 +473,7 @@ module.exports = {
             CASE
                 WHEN prices.Price is NULL THEN 0
                 ELSE prices.Price
-            END as pricePhongVu
+            END as pricePhongVu, 0 priceXG
             FROM tblHangHoa as goods
             LEFT JOIN tblHangHoaGroup1 as g1
             ON g1.ID = goods.IDGroup1
@@ -407,6 +486,31 @@ module.exports = {
             LEFT JOIN tblPrice as prices
             ON prices.IDLink = links.ID and prices.DateGet = (SELECT MAX(DateGet) from tblPrice WHERE IDLink = links.ID)
             WHERE links.EnumLoaiLink = 0
+            GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
+            prices.Price, goods.PART, goods.ID, goods.code
+			            UNION ALL
+                        
+            SELECT g1.ID as idGroup1, g1.TenNhomHang as tenNhomHang1,g2.ID as idGroup2, g2.TenNhomHang as tenNhomHang2,
+            g3.ID as idGroup3, g3.TenNhomHang as tenNhomHang3, goods.NameHangHoa as nameGoods,goods.PART as part,
+            goods.ID as idHangHoa, goods.code as code , 0 as priceHNC, 
+            0 as priceGearVN, 0 as pricePhucAnh, 0 priceAnPhat, 
+			0 as pricePhongVu, 
+			CASE
+                WHEN prices.Price is NULL THEN 0
+                ELSE prices.Price
+            END priceXG
+            FROM tblHangHoa as goods
+            LEFT JOIN tblHangHoaGroup1 as g1
+            ON g1.ID = goods.IDGroup1
+            LEFT JOIN tblHangHoaGroup2 as g2
+            ON g2.ID = goods.IDGroup2 AND g2.IDGroup1 = g1.ID
+            LEFT JOIN tblHangHoaGroup3 as g3
+            ON g3.ID = goods.IDGroup3 AND g3.IDGroup2 = g2.ID
+            LEFT JOIN tblLinkGetPrice as links
+            ON links.IDHangHoa = goods.ID
+            LEFT JOIN tblPrice as prices
+            ON prices.IDLink = links.ID and prices.DateGet = (SELECT MAX(DateGet) from tblPrice WHERE IDLink = links.ID)
+            WHERE links.EnumLoaiLink = 5
             GROUP BY g1.ID, g1.TenNhomHang, g2.ID, g2.TenNhomHang, g3.ID, g3.TenNhomHang, goods.NameHangHoa, 
             prices.Price, goods.PART, goods.ID, goods.code
             ) as scan              
@@ -447,11 +551,12 @@ module.exports = {
         let body = req.body;
         var data = JSON.parse(body.data);
         var columnScan = JSON.parse(body.columnScan);
-        var arrayScan = [0, 1, 2, 3, 4]
+        var arrayScan = [0, 1, 2, 3, 4, 5]
         if (columnScan.length < 1)
             columnScan = arrayScan
         var array = data;
         database.connectDatabase().then(async db => {
+            var group5 = {};
             var group4 = {};
             var group3 = {};
             var group2 = {};
@@ -461,6 +566,7 @@ module.exports = {
             var count2 = 0;
             var count3 = 0;
             var count4 = 0;
+            var count5 = 0;
             var count0 = 0;
             var goods = []
             // push vào obj: obj gửi vào service cào giá
@@ -470,6 +576,18 @@ module.exports = {
                         where: { IDHangHoa: data[i].idHangHoa }
                     })
                     for (var j = 0; j < link.length; j++) {
+                        if (link[j].EnumLoaiLink === 5) {
+                            if (count5 = 20) {
+                                await getPriceFromService(5, group5, goods);
+                                group5 = {};
+                                count5 = 0;
+                            }
+                            group5[count5] = {
+                                code: data[i].code,
+                                url: link[j].LinkAddress
+                            }
+                            count5 += 1;
+                        }
                         if (link[j].EnumLoaiLink === 4) {
                             if (count4 = 20) {
                                 await getPriceFromService(4, group4, goods);
@@ -533,6 +651,8 @@ module.exports = {
                     }
                 }
             }
+            if (columnScan.indexOf(5) != -1)
+                await getPriceFromService(5, group5, goods)
             if (columnScan.indexOf(4) != -1)
                 await getPriceFromService(4, group4, goods)
             if (columnScan.indexOf(3) != -1)
@@ -550,7 +670,11 @@ module.exports = {
                 array[i]['pricePhucAnh'] = 0;
                 array[i]['priceAnPhat'] = 0;
                 array[i]['pricePhongVu'] = 0;
+                array[i]['priceXG'] = 0;
                 for (var j = 0; j < goods.length; j++) {
+                    if (goods[j].key == 5 && data[i].code == goods[j].code) {
+                        array[i]['priceXG'] = converPriceToNumber(goods[j].price);
+                    }
                     if (goods[j].key == 4 && data[i].code == goods[j].code) {
                         array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
                     }
@@ -575,7 +699,6 @@ module.exports = {
                 var links = await mtblLinkGetPrice(db).findAll({
                     where: { IDHangHoa: array[i].idHangHoa }
                 })
-                console.log(array[i]);
                 await createPrice(links, db, array[i]);
             }
             var result = {
