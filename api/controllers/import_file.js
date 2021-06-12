@@ -238,8 +238,8 @@ module.exports = {
     importFile: (req, res) => {
         try {
             let body = req.body;
+            body.data = body.data.replace(/%2F/g, '%2F%')
             var data = JSON.parse(body.data.replace(/!!@@##/g, '&'));
-            var data = JSON.parse(body.data.replace(/%2F/g, '%2F%'));
             database.connectDatabase().then(async db => {
                 for (var i = 0; i < data.length; i++) {
                     if (!data[i]['Nhóm cấp 1']) continue;
