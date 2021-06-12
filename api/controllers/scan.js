@@ -289,7 +289,7 @@ module.exports = {
 
             }
         }
-        var offset = 10 * (page - 1);
+        var offset = 100 * (page - 1);
         var where;
         if (whereGroup !== '')
             where = `WHERE ` + '(' + whereGroup + ')' + whereGoods;
