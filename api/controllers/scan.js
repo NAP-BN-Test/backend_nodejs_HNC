@@ -15,6 +15,7 @@ var mtblLinkGetPrice = require('../tables/tblLinkGetPrice');
 const Sequelize = require('sequelize');
 const axios = require('axios');
 var sql = require("mssql");
+
 function filterArray(value, array) {
     var check = false;
     if (array.length > 0) {
@@ -27,13 +28,13 @@ function filterArray(value, array) {
     return check
 
 }
+
 function converPriceToNumber(price) {
     var result;
     if (price != 0) {
         result = price.replace(/,/g, '')
         return Number(result)
-    }
-    else {
+    } else {
         return 0
     }
 }
@@ -260,7 +261,7 @@ async function getPriceFromDatabase(obj, db) {
 
 module.exports = {
     // search_goods
-    functionSearchGoods: async (req, res) => {
+    functionSearchGoods: async(req, res) => {
         let body = req.body;
         var config = database.config;
         var whereGroup = '';
@@ -283,8 +284,7 @@ module.exports = {
             if (whereGroup !== '') {
                 whereGoods = ` AND (UPPER(scan.nameGoods) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.searchKey.toUpperCase().trim() + `%')`
 
-            }
-            else {
+            } else {
                 whereGoods = `(UPPER(scan.nameGoods) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.part) like N'%` + body.searchKey.toUpperCase().trim() + `%' or UPPER(scan.code) like N'%` + body.searchKey.toUpperCase().trim() + `%')`
 
             }
@@ -322,12 +322,12 @@ module.exports = {
             LEFT JOIN tblLinkGetPrice as linkPV
             ON linkPV.IDHangHoa = scan.idHangHoa AND linkPV.EnumLoaiLink = 0 
             LEFT JOIN tblLinkGetPrice as linkXG
-            ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5`+
-                where
-                + `
+            ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5` +
+                where +
+                `
             GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code,
             scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress
-            ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
+            ORDER BY scan.idGroup1 ` + `OFFSET ` + offset + ` ROWS FETCH NEXT 100 ROWS ONLY;`
             pageQuery = ` LEFT JOIN tblLinkGetPrice as linkHNC
             ON linkHNC.IDHangHoa = scan.idHangHoa AND linkHNC.EnumLoaiLink = 4
             LEFT JOIN tblLinkGetPrice as linkGVN
@@ -339,13 +339,12 @@ module.exports = {
             LEFT JOIN tblLinkGetPrice as linkPV
             ON linkPV.IDHangHoa = scan.idHangHoa AND linkPV.EnumLoaiLink = 0 
             LEFT JOIN tblLinkGetPrice as linkXG
-            ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5 `+
-                where
-                + `
+            ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5 ` +
+                where +
+                `
             GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code,
             scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress`
-        }
-        else if (whereGoods === '' || whereGroup === '') {
+        } else if (whereGoods === '' || whereGroup === '') {
             fQuery = ` LEFT JOIN tblLinkGetPrice as linkHNC
             ON linkHNC.IDHangHoa = scan.idHangHoa AND linkHNC.EnumLoaiLink = 4
             LEFT JOIN tblLinkGetPrice as linkGVN
@@ -360,9 +359,9 @@ module.exports = {
             ON linkXG.IDHangHoa = scan.idHangHoa AND linkXG.EnumLoaiLink = 5
             GROUP BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code,
             scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress
-            ORDER BY scan.idGroup1 `+ `OFFSET ` + offset + ` ROWS FETCH NEXT 10 ROWS ONLY;`
+            ORDER BY scan.idGroup1 ` + `OFFSET ` + offset + ` ROWS FETCH NEXT 100 ROWS ONLY;`
         }
-        sql.connect(config, async function (err) {
+        sql.connect(config, async function(err) {
             var request = new sql.Request();
 
             var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods, 
@@ -515,13 +514,13 @@ module.exports = {
             prices.Price, goods.PART, goods.ID, goods.code
             ) as scan              
             `
-            // query to the database and get the records
+                // query to the database and get the records
             var count;
-            await request.query(query + pageQuery, function (err, recordset) {
+            await request.query(query + pageQuery, function(err, recordset) {
                 if (err) console.log(err)
                 count = recordset.rowsAffected[0];
                 if (body.page) {
-                    request.query(query + fQuery, function (err, recordset) {
+                    request.query(query + fQuery, function(err, recordset) {
                         var result = {
                             status: Constant.STATUS.SUCCESS,
                             message: '',
@@ -530,9 +529,8 @@ module.exports = {
                         }
                         res.json(result)
                     })
-                }
-                else {
-                    request.query(query + pageQuery, function (err, recordset) {
+                } else {
+                    request.query(query + pageQuery, function(err, recordset) {
                         var result = {
                             status: Constant.STATUS.SUCCESS,
                             message: '',
@@ -547,7 +545,7 @@ module.exports = {
 
     },
     // scan_price
-    functionScanPrice: async (req, res) => {
+    functionScanPrice: async(req, res) => {
         let body = req.body;
         var data = JSON.parse(body.data);
         var columnScan = JSON.parse(body.columnScan);
@@ -569,7 +567,7 @@ module.exports = {
             var count5 = 0;
             var count0 = 0;
             var goods = []
-            // push vào obj: obj gửi vào service cào giá
+                // push vào obj: obj gửi vào service cào giá
             for (var i = 0; i < data.length; i++) {
                 if (array[i].idHangHoa) {
                     var link = await mtblLinkGetPrice(db).findAll({
@@ -663,7 +661,7 @@ module.exports = {
                 await getPriceFromService(1, group1, goods)
             if (columnScan.indexOf(0) != -1)
                 await getPriceFromService(0, group0, goods)
-            // push giá vào list gửi về FE
+                // push giá vào list gửi về FE
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
                 array[i]['priceGearVN'] = 0;

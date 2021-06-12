@@ -239,6 +239,7 @@ module.exports = {
         try {
             let body = req.body;
             var data = JSON.parse(body.data.replace(/!!@@##/g, '&'));
+            var data = JSON.parse(body.data.replace(/%2F/g, '%2F%'));
             database.connectDatabase().then(async db => {
                 for (var i = 0; i < data.length; i++) {
                     if (!data[i]['Nhóm cấp 1']) continue;
@@ -253,8 +254,7 @@ module.exports = {
                     })
                     if (exitsHangHoa) {
                         idHangHoa = exitsHangHoa.ID
-                    }
-                    else {
+                    } else {
                         var checkGroup1 = await mtblHangHoaGroup1(db).findOne({
                             where: { TenNhomHang: data[i]['Nhóm cấp 1'] ? data[i]['Nhóm cấp 1'] : '' }
                         });
@@ -274,10 +274,8 @@ module.exports = {
                                         })
                                         idGroup3 = group3.ID
                                     }
-                                }
-                                else idGroup3 = null
-                            }
-                            else {
+                                } else idGroup3 = null
+                            } else {
                                 var group2 = await mtblHangHoaGroup2(db).create({
                                     TenNhomHang: data[i]['Nhóm cấp 2'],
                                     IDGroup1: idGroup1,
@@ -293,8 +291,7 @@ module.exports = {
                                         })
                                         idGroup3 = group3.ID
                                     }
-                                }
-                                else idGroup3 = null
+                                } else idGroup3 = null
                             }
                         } else {
                             if (!data[i]['Nhóm cấp 1']) {
