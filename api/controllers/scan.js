@@ -64,38 +64,38 @@ function pushDataToArray(data, array) {
 async function getPriceFromService(key, obj, array) {
     if (obj['0']) {
         if (key == 5)
-            await axios.post(`http://163.44.192.123:5000/get_prices_xg`, obj).then(data => {
+            await axios.post(`http://db.namanphu.vn:5000/get_prices_xg`, obj).then(data => {
                 if (data.data.result)
                     pushDataToArray(data.data.result, array)
             })
 
         if (key == 4)
-            await axios.post(`http://163.44.192.123:5000/get_prices_hnc`, obj).then(data => {
+            await axios.post(`http://db.namanphu.vn:5000/get_prices_hnc`, obj).then(data => {
                 if (data.data.result)
                     pushDataToArray(data.data.result, array)
             })
 
         if (key == 0)
-            await axios.post(`http://163.44.192.123:5000/get_prices_pv`, obj).then(data => {
+            await axios.post(`http://db.namanphu.vn:5000/get_prices_pv`, obj).then(data => {
                 if (data.data.result) {
                     pushDataToArray(data.data.result, array)
                 }
 
             })
         if (key == 1)
-            await axios.post(`http://163.44.192.123:5000/get_prices_ap`, obj).then(data => {
+            await axios.post(`http://db.namanphu.vn:5000/get_prices_ap`, obj).then(data => {
                 if (data.data.result)
                     pushDataToArray(data.data.result, array)
 
             })
         if (key == 2)
-            await axios.post(`http://163.44.192.123:5000/get_prices_pa`, obj).then(data => {
+            await axios.post(`http://db.namanphu.vn:5000/get_prices_pa`, obj).then(data => {
                 if (data.data.result)
                     pushDataToArray(data.data.result, array)
 
             })
         if (key == 3)
-            await axios.post(`http://163.44.192.123:5000/get_prices_gvn`, obj).then(data => {
+            await axios.post(`http://db.namanphu.vn:5000/get_prices_gvn`, obj).then(data => {
                 if (data.data.result)
                     pushDataToArray(data.data.result, array)
 
@@ -261,7 +261,7 @@ async function getPriceFromDatabase(obj, db) {
 
 module.exports = {
     // search_goods
-    functionSearchGoods: async(req, res) => {
+    functionSearchGoods: async (req, res) => {
         let body = req.body;
         var config = database.config;
         var whereGroup = '';
@@ -361,7 +361,7 @@ module.exports = {
             scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress
             ORDER BY scan.idGroup1 ` + `OFFSET ` + offset + ` ROWS FETCH NEXT 100 ROWS ONLY;`
         }
-        sql.connect(config, async function(err) {
+        sql.connect(config, async function (err) {
             var request = new sql.Request();
 
             var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods, 
@@ -514,13 +514,13 @@ module.exports = {
             prices.Price, goods.PART, goods.ID, goods.code
             ) as scan              
             `
-                // query to the database and get the records
+            // query to the database and get the records
             var count;
-            await request.query(query + pageQuery, function(err, recordset) {
+            await request.query(query + pageQuery, function (err, recordset) {
                 if (err) console.log(err)
                 count = recordset.rowsAffected[0];
                 if (body.page) {
-                    request.query(query + fQuery, function(err, recordset) {
+                    request.query(query + fQuery, function (err, recordset) {
                         var result = {
                             status: Constant.STATUS.SUCCESS,
                             message: '',
@@ -530,7 +530,7 @@ module.exports = {
                         res.json(result)
                     })
                 } else {
-                    request.query(query + pageQuery, function(err, recordset) {
+                    request.query(query + pageQuery, function (err, recordset) {
                         var result = {
                             status: Constant.STATUS.SUCCESS,
                             message: '',
@@ -545,7 +545,7 @@ module.exports = {
 
     },
     // scan_price
-    functionScanPrice: async(req, res) => {
+    functionScanPrice: async (req, res) => {
         let body = req.body;
         var data = JSON.parse(body.data);
         var columnScan = JSON.parse(body.columnScan);
@@ -567,7 +567,7 @@ module.exports = {
             var count5 = 0;
             var count0 = 0;
             var goods = []
-                // push vào obj: obj gửi vào service cào giá
+            // push vào obj: obj gửi vào service cào giá
             for (var i = 0; i < data.length; i++) {
                 if (array[i].idHangHoa) {
                     var link = await mtblLinkGetPrice(db).findAll({
@@ -661,7 +661,7 @@ module.exports = {
                 await getPriceFromService(1, group1, goods)
             if (columnScan.indexOf(0) != -1)
                 await getPriceFromService(0, group0, goods)
-                // push giá vào list gửi về FE
+            // push giá vào list gửi về FE
             for (var i = 0; i < data.length; i++) {
                 array[i]['priceHNC'] = 0;
                 array[i]['priceGearVN'] = 0;
