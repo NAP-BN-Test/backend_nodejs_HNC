@@ -278,6 +278,53 @@ async function getPriceFromDatabase(obj, db) {
     }
     return obj
 }
+const request = require('request-promise');
+const cheerio = require('cheerio');
+async function dataScraping(type, link) {
+    let result = 0
+    console.log(type);
+    if (link)
+        try {
+            if (type == 'XGEAR')
+                return 0
+            await request(link, async function (error, response, body) {
+                if (body) {
+                    const $ = cheerio.load(body);
+                    let ds = $(body).find("b.js-pro-total-price")
+                    if (type == 'AP')
+                        ds = $(body).find("b.js-pro-total-price")
+                    else if (type == 'HNC')
+                        ds = $(body).find("strong.giakm")
+                    else if (type == 'PA')
+                        ds = $(body).find("span.detail-product-best-price")
+                    else if (type == 'PV')
+                        ds = $(body).find("span.css-htm2b9")
+                    else if (type == 'GEARVN')
+                        ds = $(body).find("span.product_sale_price")
+                    else
+                        ds = $(body).find("p.price").find("ins").find("span.woocommerce-Price-amount").find("bdi")
+                    await ds.each(async function (i, e) {
+                        let str = $(this).text().trim()
+                        if (type == 'GEARVN') {
+                            str = str.substring(0, str.length - 1)
+                            result = Number(str.replace(/,/g, ''));
+                        } else if (type == 'XGEAR') {
+                            str = str.substring(0, str.length - 1)
+                            result = Number(str.replace(/\./g, ''));
+                        }
+                        else {
+                            str = str.substring(0, str.length - 2)
+                            result = Number(str.replace(/\./g, ''));
+                        }
+
+                    })
+                }
+            });
+        } catch (error) {
+            // console.log(error + ' ');
+        }
+    return result
+}
 
 module.exports = {
     // search_goods
@@ -574,152 +621,22 @@ module.exports = {
         if (columnScan.length < 1)
             columnScan = arrayScan
         var array = data;
+        for (let d = 0; d < array.length; d++) {
+            array[d]['priceHNC'] = await dataScraping('HNC', array[d].linkHNC)
+            array[d]['priceGearVN'] = await dataScraping('GEARVN', array[d].linkGVN)
+            array[d]['pricePhucAnh'] = await dataScraping('PA', array[d].linkPA)
+            array[d]['priceAnPhat'] = await dataScraping('AP', array[d].linkAP)
+            array[d]['pricePhongVu'] = await dataScraping('PV', array[d].linkPV)
+            array[d]['priceXG'] = await dataScraping('XGEAR', array[d].linkXG)
+        }
+        var result = {
+            status: Constant.STATUS.SUCCESS,
+            message: '',
+            array: array,
+        }
+        // console.log(array);
+        res.json(result);
         database.connectDatabase().then(async db => {
-            var group5 = {};
-            var group4 = {};
-            var group3 = {};
-            var group2 = {};
-            var group1 = {};
-            var group0 = {};
-            var count1 = 0;
-            var count2 = 0;
-            var count3 = 0;
-            var count4 = 0;
-            var count5 = 0;
-            var count0 = 0;
-            var goods = []
-            // push vào obj: obj gửi vào service cào giá
-            for (var i = 0; i < data.length; i++) {
-                if (array[i].idHangHoa) {
-                    var link = await mtblLinkGetPrice(db).findAll({
-                        where: { IDHangHoa: data[i].idHangHoa }
-                    })
-                    for (var j = 0; j < link.length; j++) {
-                        if (link[j].EnumLoaiLink === 5) {
-                            if (count5 = 20) {
-                                await getPriceFromService(5, group5, goods);
-                                group5 = {};
-                                count5 = 0;
-                            }
-                            group5[count5] = {
-                                code: data[i].code,
-                                url: link[j].LinkAddress
-                            }
-                            count5 += 1;
-                        }
-                        if (link[j].EnumLoaiLink === 4) {
-                            if (count4 = 20) {
-                                await getPriceFromService(4, group4, goods);
-                                group4 = {};
-                                count4 = 0;
-                            }
-                            group4[count4] = {
-                                code: data[i].code,
-                                url: link[j].LinkAddress
-                            }
-                            count4 += 1;
-                        }
-                        if (link[j].EnumLoaiLink === 3) {
-                            if (count3 = 20) {
-                                await getPriceFromService(3, group3, goods);
-                                group3 = {};
-                                count3 = 0;
-                            }
-                            group3[count3] = {
-                                code: data[i].code,
-                                url: link[j].LinkAddress
-                            }
-                            count3 += 1
-                        }
-                        if (link[j].EnumLoaiLink === 2) {
-                            if (count2 = 20) {
-                                await getPriceFromService(2, group2, goods);
-                                group2 = {};
-                                count2 = 0;
-                            }
-                            group2[count2] = {
-                                code: data[i].code,
-                                url: link[j].LinkAddress
-                            }
-                            count2 += 1;
-                        }
-                        if (link[j].EnumLoaiLink === 1) {
-                            if (count1 = 20) {
-                                await getPriceFromService(1, group1, goods);
-                                group1 = {};
-                                count1 = 0;
-                            }
-                            group1[count1] = {
-                                code: data[i].code,
-                                url: link[j].LinkAddress
-                            }
-                            count1 += 1;
-                        }
-                        if (link[j].EnumLoaiLink === 0) {
-                            if (count0 = 20) {
-                                await getPriceFromService(0, group0, goods);
-                                group0 = {};
-                                count0 = 0;
-                            }
-                            group0[count0] = {
-                                code: data[i].code,
-                                url: link[j].LinkAddress
-                            }
-                            count0 += 1;
-                        }
-                    }
-                }
-            }
-            if (columnScan.indexOf(5) != -1)
-                await getPriceFromService(5, group5, goods)
-            if (columnScan.indexOf(4) != -1)
-                await getPriceFromService(4, group4, goods)
-            if (columnScan.indexOf(3) != -1)
-                await getPriceFromService(3, group3, goods)
-            if (columnScan.indexOf(2) != -1)
-                await getPriceFromService(2, group2, goods)
-            if (columnScan.indexOf(1) != -1)
-                await getPriceFromService(1, group1, goods)
-            if (columnScan.indexOf(0) != -1)
-                await getPriceFromService(0, group0, goods)
-            // push giá vào list gửi về FE
-            for (var i = 0; i < data.length; i++) {
-                array[i]['priceHNC'] = 0;
-                array[i]['priceGearVN'] = 0;
-                array[i]['pricePhucAnh'] = 0;
-                array[i]['priceAnPhat'] = 0;
-                array[i]['pricePhongVu'] = 0;
-                array[i]['priceXG'] = 0;
-                for (var j = 0; j < goods.length; j++) {
-                    if (goods[j].key == 5 && data[i].code == goods[j].code) {
-                        array[i]['priceXG'] = converPriceToNumber(goods[j].price);
-                    }
-                    if (goods[j].key == 4 && data[i].code == goods[j].code) {
-                        array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
-                    }
-                    if (goods[j].key == 3 && data[i].code == goods[j].code) {
-                        array[i]['priceGearVN'] = converPriceToNumber(goods[j].price);
-                    }
-                    if (goods[j].key == 2 && data[i].code == goods[j].code) {
-                        array[i]['pricePhucAnh'] = converPriceToNumber(goods[j].price);
-
-                    }
-                    if (goods[j].key == 1 && data[i].code == goods[j].code) {
-                        array[i]['priceAnPhat'] = converPriceToNumber(goods[j].price);
-
-                    }
-                    if (goods[j].key == 0 && data[i].code == goods[j].code) {
-                        array[i]['pricePhongVu'] = converPriceToNumber(goods[j].price);
-
-                    }
-                }
-            }
-            var result = {
-                status: Constant.STATUS.SUCCESS,
-                message: '',
-                array: array,
-            }
-            res.json(result);
             for (var i = 0; i < array.length; i++) {
                 var links = await mtblLinkGetPrice(db).findAll({
                     where: { IDHangHoa: array[i].idHangHoa }
@@ -728,4 +645,143 @@ module.exports = {
             }
         })
     }
+    // var group5 = {};
+    // var group4 = {};
+    // var group3 = {};
+    // var group2 = {};
+    // var group1 = {};
+    // var group0 = {};
+    // var count1 = 0;
+    // var count2 = 0;
+    // var count3 = 0;
+    // var count4 = 0;
+    // var count5 = 0;
+    // var count0 = 0;
+    // var goods = []
+    // // push vào obj: obj gửi vào service cào giá
+    // for (var i = 0; i < data.length; i++) {
+    //     if (array[i].idHangHoa) {
+    //         var link = await mtblLinkGetPrice(db).findAll({
+    //             where: { IDHangHoa: data[i].idHangHoa }
+    //         })
+    //         for (var j = 0; j < link.length; j++) {
+    //             if (link[j].EnumLoaiLink === 5) {
+    //                 if (count5 = 20) {
+    //                     await getPriceFromService(5, group5, goods);
+    //                     group5 = {};
+    //                     count5 = 0;
+    //                 }
+    //                 group5[count5] = {
+    //                     code: data[i].code,
+    //                     url: link[j].LinkAddress
+    //                 }
+    //                 count5 += 1;
+    //             }
+    //             if (link[j].EnumLoaiLink === 4) {
+    //                 if (count4 = 20) {
+    //                     await getPriceFromService(4, group4, goods);
+    //                     group4 = {};
+    //                     count4 = 0;
+    //                 }
+    //                 group4[count4] = {
+    //                     code: data[i].code,
+    //                     url: link[j].LinkAddress
+    //                 }
+    //                 count4 += 1;
+    //             }
+    //             if (link[j].EnumLoaiLink === 3) {
+    //                 if (count3 = 20) {
+    //                     await getPriceFromService(3, group3, goods);
+    //                     group3 = {};
+    //                     count3 = 0;
+    //                 }
+    //                 group3[count3] = {
+    //                     code: data[i].code,
+    //                     url: link[j].LinkAddress
+    //                 }
+    //                 count3 += 1
+    //             }
+    //             if (link[j].EnumLoaiLink === 2) {
+    //                 if (count2 = 20) {
+    //                     await getPriceFromService(2, group2, goods);
+    //                     group2 = {};
+    //                     count2 = 0;
+    //                 }
+    //                 group2[count2] = {
+    //                     code: data[i].code,
+    //                     url: link[j].LinkAddress
+    //                 }
+    //                 count2 += 1;
+    //             }
+    //             if (link[j].EnumLoaiLink === 1) {
+    //                 if (count1 = 20) {
+    //                     await getPriceFromService(1, group1, goods);
+    //                     group1 = {};
+    //                     count1 = 0;
+    //                 }
+    //                 group1[count1] = {
+    //                     code: data[i].code,
+    //                     url: link[j].LinkAddress
+    //                 }
+    //                 count1 += 1;
+    //             }
+    //             if (link[j].EnumLoaiLink === 0) {
+    //                 if (count0 = 20) {
+    //                     await getPriceFromService(0, group0, goods);
+    //                     group0 = {};
+    //                     count0 = 0;
+    //                 }
+    //                 group0[count0] = {
+    //                     code: data[i].code,
+    //                     url: link[j].LinkAddress
+    //                 }
+    //                 count0 += 1;
+    //             }
+    //         }
+    //     }
+    // }
+    // if (columnScan.indexOf(5) != -1)
+    //     await getPriceFromService(5, group5, goods)
+    // if (columnScan.indexOf(4) != -1)
+    //     await getPriceFromService(4, group4, goods)
+    // if (columnScan.indexOf(3) != -1)
+    //     await getPriceFromService(3, group3, goods)
+    // if (columnScan.indexOf(2) != -1)
+    //     await getPriceFromService(2, group2, goods)
+    // if (columnScan.indexOf(1) != -1)
+    //     await getPriceFromService(1, group1, goods)
+    // if (columnScan.indexOf(0) != -1)
+    //     await getPriceFromService(0, group0, goods)
+    // // push giá vào list gửi về FE
+    // for (var i = 0; i < data.length; i++) {
+    //     array[i]['priceHNC'] = 0;
+    //     array[i]['priceGearVN'] = 0;
+    //     array[i]['pricePhucAnh'] = 0;
+    //     array[i]['priceAnPhat'] = 0;
+    //     array[i]['pricePhongVu'] = 0;
+    //     array[i]['priceXG'] = 0;
+    //     for (var j = 0; j < goods.length; j++) {
+    //         if (goods[j].key == 5 && data[i].code == goods[j].code) {
+    //             array[i]['priceXG'] = converPriceToNumber(goods[j].price);
+    //         }
+    //         if (goods[j].key == 4 && data[i].code == goods[j].code) {
+    //             array[i]['priceHNC'] = converPriceToNumber(goods[j].price);
+    //         }
+    //         if (goods[j].key == 3 && data[i].code == goods[j].code) {
+    //             array[i]['priceGearVN'] = converPriceToNumber(goods[j].price);
+    //         }
+    //         if (goods[j].key == 2 && data[i].code == goods[j].code) {
+    //             array[i]['pricePhucAnh'] = converPriceToNumber(goods[j].price);
+
+    //         }
+    //         if (goods[j].key == 1 && data[i].code == goods[j].code) {
+    //             array[i]['priceAnPhat'] = converPriceToNumber(goods[j].price);
+
+    //         }
+    //         if (goods[j].key == 0 && data[i].code == goods[j].code) {
+    //             array[i]['pricePhongVu'] = converPriceToNumber(goods[j].price);
+
+    //         }
+    //     }
+    // }
 }
