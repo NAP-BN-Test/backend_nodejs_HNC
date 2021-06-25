@@ -9,6 +9,8 @@ module.exports = {
         database: 'HNC_DB',
         options: {
             encrypt: false,
+            enableArithAbort: true,
+            validateBulkLoadParameters: true
         },
     },
     connectDatabase: async function () {
@@ -29,7 +31,7 @@ module.exports = {
             define: {
                 timestamps: false,
                 freezeTableName: true
-            }
+            },
         });
 
         db.authenticate()

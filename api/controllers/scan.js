@@ -65,14 +65,22 @@ async function getPriceFromService(key, obj, array) {
     if (obj['0']) {
         if (key == 5)
             await axios.post(`http://db.namanphu.vn:5000/get_prices_xg`, obj).then(data => {
-                if (data.data.result)
-                    pushDataToArray(data.data.result, array)
+                try {
+                    if (data.data.result)
+                        pushDataToArray(data.data.result, array)
+                } catch (error) {
+                    console.log(error);
+                }
             })
 
         if (key == 4)
             await axios.post(`http://db.namanphu.vn:5000/get_prices_hnc`, obj).then(data => {
-                if (data.data.result)
-                    pushDataToArray(data.data.result, array)
+                try {
+                    if (data.data.result)
+                        pushDataToArray(data.data.result, array)
+                } catch (error) {
+                    console.log(error);
+                }
             })
 
         if (key == 0)
@@ -84,20 +92,32 @@ async function getPriceFromService(key, obj, array) {
             })
         if (key == 1)
             await axios.post(`http://db.namanphu.vn:5000/get_prices_ap`, obj).then(data => {
-                if (data.data.result)
-                    pushDataToArray(data.data.result, array)
+                try {
+                    if (data.data.result)
+                        pushDataToArray(data.data.result, array)
+                } catch (error) {
+                    console.log(error);
+                }
 
             })
         if (key == 2)
             await axios.post(`http://db.namanphu.vn:5000/get_prices_pa`, obj).then(data => {
-                if (data.data.result)
-                    pushDataToArray(data.data.result, array)
+                try {
+                    if (data.data.result)
+                        pushDataToArray(data.data.result, array)
+                } catch (error) {
+                    console.log(error);
+                }
 
             })
         if (key == 3)
             await axios.post(`http://db.namanphu.vn:5000/get_prices_gvn`, obj).then(data => {
-                if (data.data.result)
-                    pushDataToArray(data.data.result, array)
+                try {
+                    if (data.data.result)
+                        pushDataToArray(data.data.result, array)
+                } catch (error) {
+                    console.log(error);
+                }
 
             })
     }
@@ -518,7 +538,8 @@ module.exports = {
             var count;
             await request.query(query + pageQuery, function (err, recordset) {
                 if (err) console.log(err)
-                count = recordset.rowsAffected[0];
+                if (recordset)
+                    count = recordset.rowsAffected[0];
                 if (body.page) {
                     request.query(query + fQuery, function (err, recordset) {
                         var result = {
@@ -693,18 +714,18 @@ module.exports = {
                     }
                 }
             }
-            for (var i = 0; i < array.length; i++) {
-                var links = await mtblLinkGetPrice(db).findAll({
-                    where: { IDHangHoa: array[i].idHangHoa }
-                })
-                await createPrice(links, db, array[i]);
-            }
             var result = {
                 status: Constant.STATUS.SUCCESS,
                 message: '',
                 array: array,
             }
             res.json(result);
+            for (var i = 0; i < array.length; i++) {
+                var links = await mtblLinkGetPrice(db).findAll({
+                    where: { IDHangHoa: array[i].idHangHoa }
+                })
+                await createPrice(links, db, array[i]);
+            }
         })
     }
 }
