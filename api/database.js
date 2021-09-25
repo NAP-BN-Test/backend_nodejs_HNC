@@ -4,18 +4,16 @@ const Sequelize = require('sequelize');
 module.exports = {
     config: {
         user: 'sa',
-        password: '1234',
-        server: 'localhost',
+        password: 'Viet@solution$213%171^198',
+        server: '103.154.100.26',
         database: 'HNC_DB',
         options: {
             encrypt: false,
-            enableArithAbort: true,
-            validateBulkLoadParameters: true
         },
     },
     connectDatabase: async function () {
-        const db = new Sequelize('HNC_DB', 'sa', '1234', {
-            host: 'localhost',
+        const db = new Sequelize('HNC_DB', 'sa', 'Viet@solution$213%171^198', {
+            host: '103.154.100.26',
             dialect: 'mssql',
             operatorsAliases: '0',
             // Bắt buộc phải có
@@ -31,7 +29,7 @@ module.exports = {
             define: {
                 timestamps: false,
                 freezeTableName: true
-            },
+            }
         });
 
         db.authenticate()

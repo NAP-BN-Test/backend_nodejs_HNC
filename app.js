@@ -54,7 +54,7 @@ app.get('/zalo', function (req, res) {
 })
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const port = process.env.PORT || 1598
+const port = process.env.PORT || 3401
 
 server.listen(port, function () {
     console.log('http://localhost:' + port);

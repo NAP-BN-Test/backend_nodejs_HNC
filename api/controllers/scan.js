@@ -308,7 +308,7 @@ async function dataScraping(type, link) {
                         if (type == 'GEARVN') {
                             str = str.substring(0, str.length - 1)
                             result = Number(str.replace(/,/g, ''));
-                        } else if (type == 'XGEAR') {
+                        } else if (type == 'XGEAR' || type == 'HNC' || type == 'PV') {
                             str = str.substring(0, str.length - 1)
                             result = Number(str.replace(/\./g, ''));
                         }
@@ -589,13 +589,22 @@ module.exports = {
                     count = recordset.rowsAffected[0];
                 if (body.page) {
                     request.query(query + fQuery, function (err, recordset) {
-                        var result = {
-                            status: Constant.STATUS.SUCCESS,
-                            message: '',
-                            array: recordset.recordsets[0],
-                            all: count,
+                        if (recordset) {
+                            var result = {
+                                status: Constant.STATUS.SUCCESS,
+                                message: '',
+                                array: recordset.recordsets[0],
+                                all: count,
+                            }
+                            res.json(result)
+                        } else {
+                            var result = {
+                                status: Constant.STATUS.FAIL,
+                                message: 'Connect timeout!',
+                            }
+                            res.json(result)
                         }
-                        res.json(result)
+
                     })
                 } else {
                     request.query(query + pageQuery, function (err, recordset) {
@@ -634,7 +643,7 @@ module.exports = {
             message: '',
             array: array,
         }
-        // console.log(array);
+        console.log(array);
         res.json(result);
         database.connectDatabase().then(async db => {
             for (var i = 0; i < array.length; i++) {
