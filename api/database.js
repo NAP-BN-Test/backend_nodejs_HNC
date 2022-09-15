@@ -7,18 +7,28 @@ module.exports = {
         password: 'Viet@solution$213%171^198',
         server: '103.154.100.26',
         database: 'HNC_DB',
+        connectionTimeout: 30000,
         options: {
-            encrypt: false,
+            encrypt: true,
+
+            // requestTimeout: 300000
         },
+        pool: {
+            acquireTimeoutMillis: 60000,
+            idleTimeoutMillis: 60000
+        }
     },
-    connectDatabase: async function () {
+    connectDatabase: async function() {
         const db = new Sequelize('HNC_DB', 'sa', 'Viet@solution$213%171^198', {
             host: '103.154.100.26',
             dialect: 'mssql',
             operatorsAliases: '0',
             // Bắt buộc phải có
             dialectOptions: {
-                options: { encrypt: false }
+                options: {
+                    encrypt: false,
+                    requestTimeout: 300000
+                }
             },
             pool: {
                 max: 5,
@@ -32,12 +42,12 @@ module.exports = {
             }
         });
 
-        db.authenticate()
+        await db.authenticate()
             .then(() => console.log('Ket noi thanh cong'))
             .catch(err => console.log(err.message));
         return db;
     },
-    updateTable: async function (listObj, table, id) {
+    updateTable: async function(listObj, table, id) {
         let updateObj = {};
         for (let field of listObj) {
             updateObj[field.key] = field.value

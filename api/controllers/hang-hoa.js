@@ -14,7 +14,8 @@ const mtblPrice = require('../tables/tblPrice');
 
 async function getListIDLinkGetPrice(db, listID) {
     var listIDLinkPrice = await mtblLinkGetPrice(db).findAll({
-        where: { IDHangHoa: { [Op.in]: listID } },
+        where: { IDHangHoa: {
+                [Op.in]: listID } },
     })
     var list = [];
     listIDLinkPrice.forEach(item => {
@@ -28,7 +29,8 @@ async function deleteHangHoa(db, listID) {
     await apiLinkGetPrice.deletetblLinkGetPrice(db, list);
     mHangHoa(db).destroy({
         where: {
-            ID: { [Op.in]: listID },
+            ID: {
+                [Op.in]: listID },
         }
     });
 }
@@ -57,14 +59,10 @@ async function checkGroup(db, idGroup1, idGroup2, idGroup3) {
                 })
                 if (checkIn(array, idGroup3)) {
                     return true
-                }
-                else return false
-            }
-            else return true
-        }
-        else return false
-    }
-    else if (idGroup3) return false
+                } else return false
+            } else return true
+        } else return false
+    } else if (idGroup3) return false
     else {
         return true
     }
@@ -74,8 +72,7 @@ async function funtionFindLinkGetPrice(db, id, listLink) {
     if (listLink.length > 0) {
         var linkOfGoods = await mtblLinkGetPrice(db).findAll({
             where: {
-                [Op.and]: [
-                    {
+                [Op.and]: [{
                         [Op.not]: {
                             EnumLoaiLink: listLink,
                         }
@@ -85,8 +82,7 @@ async function funtionFindLinkGetPrice(db, id, listLink) {
                 ]
             }
         })
-    }
-    else {
+    } else {
         var linkOfGoods = await mtblLinkGetPrice(db).findAll({
             where: {
                 [Op.and]: [
@@ -173,8 +169,7 @@ module.exports = {
 
                         res.json(result);
                     })
-                }
-                else {
+                } else {
                     var result = {
                         status: Constant.STATUS.FAIL,
                         message: 'Tạo bản ghi không hợp lệ. Vui lòng kiểm tra lại !',
@@ -264,8 +259,7 @@ module.exports = {
                         }
                     }
                     var linkOfGoods = await funtionFindLinkGetPrice(db, body.id, listLink);
-                }
-                else {
+                } else {
                     var linkOfGoods = await funtionFindLinkGetPrice(db, body.id, []);
                 }
                 var listLink = [];
@@ -317,13 +311,17 @@ module.exports = {
             let whereSearch = [];
             if (body.searchKey) {
                 whereSearch = [
-                    { NameHangHoa: { [Op.like]: '%' + body.searchKey + '%' } },
-                    { Code: { [Op.like]: '%' + body.searchKey + '%' } },
-                    { PART: { [Op.like]: '%' + body.searchKey + '%' } },
+                    { NameHangHoa: {
+                            [Op.like]: '%' + body.searchKey + '%' } },
+                    { Code: {
+                            [Op.like]: '%' + body.searchKey + '%' } },
+                    { PART: {
+                            [Op.like]: '%' + body.searchKey + '%' } },
                 ];
             } else {
                 whereSearch = [
-                    { NameHangHoa: { [Op.like]: '%' + '' + '%' } },
+                    { NameHangHoa: {
+                            [Op.like]: '%' + '' + '%' } },
                 ];
             }
             if (body.idGroup1) {
@@ -359,10 +357,10 @@ module.exports = {
                 if (body.page)
                     page = Number(body.page);
             }
+            console.log(where);
             await mHangHoa(db).findAll({
                 where: where,
-                include: [
-                    {
+                include: [{
                         model: mtblHangHoaGroup1(db)
                     },
                     {
@@ -375,7 +373,9 @@ module.exports = {
                         model: mtblLinkGetPrice(db)
                     }
                 ],
-                order: [['ID', 'DESC']],
+                order: [
+                    ['ID', 'DESC']
+                ],
                 offset: itemPerPage * (page - 1),
                 limit: itemPerPage
             }).then(data => {
@@ -425,8 +425,7 @@ module.exports = {
         database.connectDatabase().then(async db => {
             await mHangHoa(db).findOne({
                 where: { ID: body.id },
-                include: [
-                    {
+                include: [{
                         model: mtblHangHoaGroup1(db)
                     },
                     {
@@ -434,8 +433,7 @@ module.exports = {
                     },
                     {
                         model: mtblHangHoaGroup3(db)
-                    }
-                    , {
+                    }, {
                         model: mtblLinkGetPrice(db)
                     }
                 ],

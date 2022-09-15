@@ -470,7 +470,8 @@ module.exports = {
             scan.idHangHoa, part, nameGoods, linkHNC.LinkAddress, linkPV.LinkAddress, linkAP.LinkAddress, linkGVN.LinkAddress, linkPA.LinkAddress, linkXG.LinkAddress, linkCELLPHONES.LinkAddress
             ORDER BY scan.idGroup1 ` + `OFFSET ` + offset + ` ROWS FETCH NEXT 100 ROWS ONLY;`
         }
-        sql.connect(config, async function(err) {
+        await sql.connect(config, async function(err) {
+            console.log("err", err);
             var request = new sql.Request();
 
             var query = `SELECT row_number() OVER (ORDER BY scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods) stt, scan.idGroup1, scan.idGroup2, scan.idGroup3, tenNhomHang1, tenNhomHang2, tenNhomHang3, code, scan.idHangHoa, part, nameGoods, 
@@ -650,12 +651,12 @@ module.exports = {
             `
                 // query to the database and get the records
             var count;
-            await request.query(query + pageQuery, function(err, recordset) {
-                if (err) console.log(err)
+            await request.query(query + pageQuery).then(async recordset => {
                 if (recordset)
                     count = recordset.rowsAffected[0];
                 if (body.page) {
-                    request.query(query + fQuery, function(err, recordset) {
+                    await request.query(query + fQuery, function(err, recordset) {
+                        console.log("err2", err);
                         if (recordset) {
                             var result = {
                                 status: Constant.STATUS.SUCCESS,
@@ -674,7 +675,7 @@ module.exports = {
 
                     })
                 } else {
-                    request.query(query + pageQuery, function(err, recordset) {
+                    await request.query(query + pageQuery, function(err, recordset) {
                         var result = {
                             status: Constant.STATUS.SUCCESS,
                             message: '',
@@ -684,7 +685,13 @@ module.exports = {
                         res.json(result)
                     })
                 }
-            });
+            }).catch(err => {
+                var result = {
+                    status: Constant.STATUS.FAIL,
+                    message: 'Connect timeout!',
+                }
+                res.json(result)
+            })
         })
 
     },
