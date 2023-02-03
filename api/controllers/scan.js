@@ -322,35 +322,50 @@ async function dataScraping(type, link) {
                         console.log(error);
                     }
                 })
+                // if (type == 'AP')
+                //     await axios.post(`http://db.namanphu.vn:5000/get_prices_ap`, new URLSearchParams({ url: link })).then(data => {
+                //         try {
+                //             console.log(data.data);
+                //             if (data.data.result)
+                //                 result = data.data.result
+                //         } catch (error) {
+                //             console.log(error);
+                //         }
+                //     })
 
             await request(link, async function(error, response, body) {
                 if (body) {
-                    const $ = cheerio.load(body);
-                    let ds = $(body).find("b.js-pro-total-price")
-                    if (type == 'AP')
-                        ds = $(body).find("b.js-pro-total-price")
-                    else if (type == 'HNC')
-                        ds = $(body).find("strong.giakm")
-                    else if (type == 'PA')
-                        ds = $(body).find("span.detail-product-best-price")
-                    else if (type == 'GEARVN')
-                        ds = $(body).find("span.product_sale_price")
-                    else
-                        ds = $(body).find("p.price").find("ins").find("span.woocommerce-Price-amount").find("bdi")
-                        //   
-                    await ds.each(async function(i, e) {
-                        let str = $(this).text().trim()
-                        if (type == 'GEARVN') {
-                            str = str.substring(0, str.length - 1)
-                            result = Number(str.replace(/,/g, ''));
-                        } else if (type == 'XGEAR' || type == 'HNC') {
-                            str = str.substring(0, str.length - 1)
-                            result = Number(str.replace(/\./g, ''));
-                        } else {
-                            str = str.substring(0, str.length - 2)
-                            result = Number(str.replace(/\./g, ''));
-                        }
-                    })
+                    try {
+                        const $ = cheerio.load(body);
+                        let ds = $(body).find("b.js-pro-total-price")
+                        if (type == 'AP')
+                            ds = $(body).find("b.js-pro-total-price")
+                        else
+                        if (type == 'HNC')
+                            ds = $(body).find("strong.giakm")
+                        else if (type == 'PA')
+                            ds = $(body).find("span.detail-product-best-price")
+                        else if (type == 'GEARVN')
+                            ds = $(body).find("span.product_sale_price")
+                        else
+                            ds = $(body).find("p.price").find("ins").find("span.woocommerce-Price-amount").find("bdi")
+                            //   
+                        await ds.each(async function(i, e) {
+                            let str = $(this).text().trim()
+                            if (type == 'GEARVN') {
+                                str = str.substring(0, str.length - 1)
+                                result = Number(str.replace(/,/g, ''));
+                            } else if (type == 'XGEAR' || type == 'HNC') {
+                                str = str.substring(0, str.length - 1)
+                                result = Number(str.replace(/\./g, ''));
+                            } else {
+                                str = str.substring(0, str.length - 2)
+                                result = Number(str.replace(/\./g, ''));
+                            }
+                        })
+                    } catch (error) {
+                        console.log(error);
+                    }
                 }
             });
         } catch (error) {

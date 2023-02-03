@@ -8,10 +8,11 @@ module.exports = {
         server: '103.154.100.26',
         database: 'HNC_DB',
         connectionTimeout: 30000,
+        requestTimeout: 30000,
         options: {
-            encrypt: true,
+            encrypt: false,
 
-            // requestTimeout: 300000
+            // 
         },
         pool: {
             acquireTimeoutMillis: 60000,
